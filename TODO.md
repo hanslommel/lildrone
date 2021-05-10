@@ -11,6 +11,9 @@
   - lidars
     - DONE
     - Justin - try to plumb through F/C
+      - down lidar connected to FC UART, not tested
+  - FC
+    - is USB from FC to pi just UART connection? use gpio pins?
   - IMU
     - Pete- after ardupilot
     - alternatively, just do all SE on F/C?
