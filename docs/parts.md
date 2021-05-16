@@ -14,4 +14,4 @@
   - https://newbeedrone.com/collections/fc-esc-stack/products/diatone-mamba-f722-mini-mk2-f40-mini-pro-bl32-6s-stack
 - Receiver
   - https://www.amazon.com/FrSky-R-XSR-Redundancy-Telemetry-Receiver/dp/B074QHJRBC/ref=pd_day0fbt_2/133-9160938-6581235?_encoding=UTF8&pd_rd_i=B074QHJRBC&pd_rd_r=336b2a90-a88a-4070-b38a-5e4983fb28b0&pd_rd_w=b4FHe&pd_rd_wg=XdfoY&pf_rd_p=6a05ef20-9a93-4152-93b4-38b758e10220&pf_rd_r=0VM5CSP3Y20BRBQE1RBQ&psc=1&refRID=0VM5CSP3Y20BRBQE1RBQ
-  
+- 'LiDAR' https://www.amazon.com/Benewake-TF-Luna-Single-Point-Ranging-Interface/dp/B086MJQSLR  
