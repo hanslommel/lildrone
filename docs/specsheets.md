@@ -1,6 +1,3 @@
-#Links to spec sheets
+i deleted the specsheets file because i don't know how to git
 
-Add any spec sheets in this folder, or just add links in here.
-
-- Stereo module
-  - https://www.arducam.com/product/multi-camera-adapter-doubleplexer-stereo-module-v2-raspberry-pi-zero-3-b-4/
+but here it's back. i'll add them as i find them
