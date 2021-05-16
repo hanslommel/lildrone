@@ -2,6 +2,8 @@
 
 - Stereo module
   -  https://www.amazon.com/Arducam-Camera-Adapter-Doubleplexer-Raspberry/dp/B07VD9XLYH/ref=sr_1_7?dchild=1&keywords=arducam+raspberry+pi+zero+camera&qid=1619317727&sr=8-7
+    - this one can't do synchronous stereo ^^
+  - https://www.robotshop.com/en/arducam-stereoscopic-camera-kit-w-1mp-ov9281-2x-camarray-stereo-camera-hat.html
 - Cameras
   - https://www.amazon.com/Raspberry-Camera-Module-Megapixels-Sensor/dp/B08Q85DMYT/ref=sr_1_5?dchild=1&keywords=pi+camera+5mp&qid=1619318040&sr=8-5
 - Raspberry Pi
