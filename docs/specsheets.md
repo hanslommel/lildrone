@@ -1,3 +1,1 @@
-i deleted the specsheets file because i don't know how to git
-
-but here it's back. i'll add them as i find them
+Raspberry pi wifi setup: https://howchoo.com/g/ndy1zte2yjn/how-to-set-up-wifi-on-your-raspberry-pi-without-ethernet
