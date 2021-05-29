@@ -2,20 +2,24 @@
 
 ##Software
 - Justin and Pete- Install OS on Pi - RASPBIAN
-  - Justin DONE
+  - Justin: need to image pi with GUI-less raspbian
 - Get data on Pi
   - cameras
     - arducam shield
       - DONE
     - Justin - connect custom stereo rig
+      - DONE
   - lidars
     - DONE
     - Justin - try to plumb through F/C
       - down lidar connected to FC UART, not tested
+      - get forward lidar connected
+        - try to see data on betaflight?
   - FC
     - is USB from FC to pi just UART connection? use gpio pins?
+     - just UART
   - IMU
-    - Pete- after ardupilot
+    - Pete- after betaflight
     - alternatively, just do all SE on F/C?
 - SW architecture on Pi
   - Pete- get a starting point, build something with CMake
@@ -24,9 +28,11 @@
   - Pete- how do want to diagram?  draw.io?
 - install ardupilot on Mamba - Pete and Justin
   - https://ardupilot.org/copter/docs/common-loading-firmware-onto-chibios-only-boards.html
+  - NOPE use betaflight! it supports MultiWii
 - Get data on Mamba from Pi
   - Pete- make a plan
-- Pete- Fork ardupilot
+  - MultiWii
+- Pete- Fork betaflight
 - Simulation
   - ROS?
   - simple one-off?
