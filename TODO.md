@@ -23,7 +23,11 @@
     - MultiWii:
       - how do you do the MSP
       - how to send msp signal from pi
-      - 
+        - MultiWii python module! install with: pip3 install MultiWii
+      - connect mamba to pi over uart
+      - make python script on pi that uses multiwii MSP, open serial port with it
+      - configure betaflight to listen to serial UART
+       - then MultiWii just works? maybe something is sent over MSP that enables it
 
   - IMU
     - Pete- after betaflight
