@@ -20,6 +20,10 @@
     - is USB from FC to pi just UART connection? use gpio pins?
      - just UART
     - what signal do we want to send? pwm like receiver? setpoint?
+    - MultiWii:
+      - how do you do the MSP
+      - how to send msp signal from pi
+      - 
 
   - IMU
     - Pete- after betaflight
