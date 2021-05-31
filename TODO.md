@@ -54,7 +54,7 @@
   - to run more SE and local planning on board?
 
 ##Hardware
-- Justin- Power the Pi
+- Justin- Power the Pi -- DONE
   - pads from ESC board
   - print pete a real camera holder!
    - make edits to finalize
