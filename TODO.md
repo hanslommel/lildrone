@@ -61,7 +61,7 @@
    - make top piece out of pi holder to attach to camera holder
 - Pete- put together frame, pi, f/c, escs, motors, battery
   - power on
-
+  - order Matek optical flow
 
 ##Other
 - Pete- Order another Pi - 4B 4GB
