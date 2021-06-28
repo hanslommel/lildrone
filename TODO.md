@@ -60,8 +60,9 @@
    - make edits to finalize
    - make top piece out of pi holder to attach to camera holder
 - Pete- put together frame, pi, f/c, escs, motors, battery
-  - power on
-  - order Matek optical flow
+  - power on DONE
+  - order Matek optical flow DONE
+  - order luna lidar DONE
 
 ##Other
 - Pete- Order another Pi - 4B 4GB
