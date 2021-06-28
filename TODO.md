@@ -1,14 +1,14 @@
 #TODO List for lildrone project
 
 ##Software
-- Justin and Pete- Install OS on Pi - RASPBIAN
+- Justin and Pete- Install OS on Pi - RASPBIAN  -DONE-
   - Justin: need to image pi with GUI-less raspbian
 - Get data on Pi
   - cameras
     - arducam shield
-      - DONE
+      - Justin DONE, Pete TODO
     - Justin - connect custom stereo rig
-      - DONE
+      - DONE, Pete TODO
   - fork repo for cameras https://github.com/ArduCAM/MIPI_Camera.git
   - lidars
     - DONE
