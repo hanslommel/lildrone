@@ -9,7 +9,8 @@
       - Justin DONE, Pete TODO
     - Justin - connect custom stereo rig
       - DONE, Pete TODO
-  - fork repo for cameras https://github.com/ArduCAM/MIPI_Camera.git
+  - fork repo for cameras https://github.com/ArduCAM/MIPI_Camera.gi
+    - actually, let's just submodule it as-is until we have motivation to make changes and fork
   - lidars
     - DONE
     - Justin - try to plumb through F/C
