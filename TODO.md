@@ -1,4 +1,16 @@
-#TODO List for lildrone project
+#TODOList for lildrone project
+08/01/2021
+- what can we do?
+  - calibrated and streamed data from the arducam on Pi (Justin)
+  - we've seen orientation and calibrated IMU in betaflight
+
+- Next:
+  - (Justin) check out range data on betaflight (UART)
+  - (Justin) check out optical flow data on betaflight (UART)
+  - (Justin) RC flight
+  - (Pete) get all the data on Pi
+    - MultiWii (MSP)
+  - (Pete) log all the data on Pi
 
 ##Software
 - Justin and Pete- Install OS on Pi - RASPBIAN  -DONE-
