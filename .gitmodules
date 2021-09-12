@@ -1,6 +1,3 @@
 [submodule "lilbeaflight"]
 	path = lilbetaflight
 	url = https://github.com/hanslommel/betaflight.git
-[submodule "pyMultiWii"]
-	path = pyMultiWii
-	url = https://github.com/alduxvm/pyMultiWii.git
