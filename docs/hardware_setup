@@ -1,0 +1,8 @@
+Instructions for setting up the pi, flight controller, and sensors - assuming you have connected
+the "normal drone" stuff (power dist, motors, etc.) already.
+
+The pi communicates with the flight controller over GPIO 14 (TXD) and 15 (RXD). Wire 14 to the
+RX of one of the flight controller's UARTs, and 15 to the TX so you have TX -> RX on both (I used
+the UART marked TX5/RX5 on the Mamba, corresponding to UART 4 in betaflight?)
+Once connected, set that UART to Serial RX in Betaflight, and from the main settings page set
+the receiver to MSP.
