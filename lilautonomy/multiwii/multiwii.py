@@ -16,7 +16,22 @@ class ControllerBase:
         print('ControllerBase.set()')
 
 class MultiWiiSensor(SensorBase):
-    someState = 0
+    board = None
+
+    def __init__(self):
+        print('MultiWiiSensor init')
+        board = MSPy(device="/dev/serial0", loglevel='WARNING', baudrate=500000)
+
+    def get(self):
+        board.fast_read_imu()
+
+        accelerometer = board.SENSOR_DATA['accelerometer']
+        gyroscope = board.SENSOR_DATA['gyroscope']
+        #voltage = board.ANALOG['voltage']
+        #attitude = board.SENSOR_DATA['kinematics']
+
+        print(accelerometer)
+        print(gyroscope)
 
 class MultiWiiController(ControllerBase):
     someGain = 0
