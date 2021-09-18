@@ -29,7 +29,8 @@ time = start_time
 while time < start_time + 10:
     print(f'time = {time}')
 
-    multiwii_get_test()
+    #multiwii_get_test()
+    getData.get()
     se_test()
     mapping_test()
     planning_test()

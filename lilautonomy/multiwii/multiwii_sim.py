@@ -1,4 +1,6 @@
 
+from yamspy import MSPy
+
 class SensorBase:
     def __init__(self):
         print('Initializing SensorBase')
