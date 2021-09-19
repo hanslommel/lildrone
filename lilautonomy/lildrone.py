@@ -6,32 +6,8 @@ import time as timelib
 
 from multiwii import MultiWiiInterface, MultiWiiSim
 from SE import StateEstimator
-from mapping import mapping_test
-from planning import planning_test
-
-# def thread_function(name):
-#     logging.info("Thread %s: starting", name)
-#     for ii in range(10):
-#         timelib.sleep(2)
-#         logging.info("Thread %s: running", name)
-#     logging.info("Thread %s: finishing", name)
-
-# format = "%(asctime)s: %(message)s"
-# logging.basicConfig(format=format, level=logging.INFO,
-#                     datefmt="%H:%M:%S")
-
-# logging.info("Main    : before creating thread")
-# x = threading.Thread(target=thread_function, args=(1,))
-# y = threading.Thread(target=thread_function, args=(2,))
-# logging.info("Main    : before running threads")
-# x.start()
-# y.start()
-# logging.info("Main    : wait for the threads to finish")
-# # x.join()
-# logging.info("Main    : all done")
-
-
-
+from mapping import Mapping
+from planning import Planning
 
 # some settings
 simulation = True
@@ -52,18 +28,21 @@ SEThread = threading.Thread(target=SE.loop) # could probably move thread into th
 SE.start()
 SEThread.start()
 
+Map = Mapping()
+MapThread = threading.Thread(target=Map.loop) # could probably move thread into the Mapping class
+Map.start()
+MapThread.start()
+
+Planner = Planning()
+PlannerThread = threading.Thread(target=Planner.loop) # could probably move thread into the Planning class
+Planner.start()
+PlannerThread.start()
+
 start_time = timelib.time()
 time = start_time
 while time < start_time + 10:
     print(f'time = {time}')
-
-    # FCInterface.get()
-    # se_test()
-    # mapping_test()
-    # planning_test()
-    # FCInterface.set()
-
-    # print('')
+    print('')
 
     timelib.sleep(time + main_loop_dt - timelib.time())
 
@@ -73,3 +52,7 @@ FCInterface.stop()
 FCInterfaceThread.join()
 SE.stop()
 SEThread.join()
+Map.stop()
+MapThread.join()
+Planner.stop()
+PlannerThread.join()

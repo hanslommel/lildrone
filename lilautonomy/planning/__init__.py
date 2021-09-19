@@ -1,1 +1,1 @@
-from .planning import planning_test
+from .planning import Planning
