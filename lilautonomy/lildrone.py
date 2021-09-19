@@ -5,7 +5,7 @@ import threading
 import time as timelib
 
 from multiwii import MultiWiiInterface, MultiWiiSim
-from SE import se_test
+from SE import StateEstimator
 from mapping import mapping_test
 from planning import planning_test
 
@@ -35,7 +35,7 @@ from planning import planning_test
 
 # some settings
 simulation = True
-timestep = 0.1
+main_loop_dt = 1
 
 # some setup
 if simulation:
@@ -43,10 +43,14 @@ if simulation:
 else:
     FCInterface = MultiWiiInterface()
 
-#SE = stateEstimator()
-FCInterfaceThread = threading.Thread(target=FCInterface.loop)
+FCInterfaceThread = threading.Thread(target=FCInterface.loop) # could probably move thread into the Interface class
 FCInterface.start()
 FCInterfaceThread.start()
+
+SE = StateEstimator()
+SEThread = threading.Thread(target=SE.loop) # could probably move thread into the StateEstimator class
+SE.start()
+SEThread.start()
 
 start_time = timelib.time()
 time = start_time
@@ -61,8 +65,11 @@ while time < start_time + 10:
 
     # print('')
 
-    timelib.sleep(time + timestep - timelib.time())
+    timelib.sleep(time + main_loop_dt - timelib.time())
 
-    time = time + timestep
+    time = time + main_loop_dt
 
 FCInterface.stop()
+FCInterfaceThread.join()
+SE.stop()
+SEThread.join()
