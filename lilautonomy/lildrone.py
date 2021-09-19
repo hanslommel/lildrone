@@ -1,26 +1,20 @@
 
 import time as timelib
 
-from multiwii import multiwii_get_test, multiwii_set_test, MultiWiiSensor, MultiWiiController
+from multiwii import MultiWiiInterface, MultiWiiSim
 from SE import se_test
 from mapping import mapping_test
 from planning import planning_test
 
 # some settings
-simulateSensors = False
-simulateControls = False
+simulation = True
 timestep = 0.1
 
 # some setup
-#if simulateSensors:
-    #getData = sensorsSim()
-#else:
-getData = MultiWiiSensor()
-
-#if simulateControls:
-#    setData = controlsSim()
-#else:
-setData = MultiWiiController()
+if simulation:
+    FCInterface = MultiWiiSim()
+else:
+    FCInterface = MultiWiiInterface()
 
 #SE = stateEstimator()
 
@@ -29,12 +23,11 @@ time = start_time
 while time < start_time + 10:
     print(f'time = {time}')
 
-    #multiwii_get_test()
-    getData.get()
+    FCInterface.get()
     se_test()
     mapping_test()
     planning_test()
-    multiwii_set_test()
+    FCInterface.set()
 
     print('')
 

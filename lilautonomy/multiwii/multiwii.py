@@ -1,43 +1,68 @@
 
 from yamspy import MSPy
 
-class SensorBase:
+class FCInterfaceBase:
     def __init__(self):
-        print('Initializing SensorBase')
+        print('Initializing FCInterfaceBase')
 
     def get(self):
-        print('SensorBase.get()')
-
-class ControllerBase:
-    def __init__(self):
-        print('Initializing ControllerBase')
-
+        print('FCInterfaceBase.get()')
+    
     def set(self):
-        print('ControllerBase.set()')
+        print('FCInterfaceBase.set()')
 
-class MultiWiiSensor(SensorBase):
+class MultiWiiInterface(FCInterfaceBase):
     board = None
 
     def __init__(self):
-        print('MultiWiiSensor init')
+        print('MultiWiiInterface init')
         self.board = MSPy(device="/dev/serial0", loglevel='WARNING', baudrate=500000)
 
     def get(self):
-        self.board.fast_read_imu()
+        with self.board:
+            self.board.fast_read_imu()
 
-        accelerometer = self.board.SENSOR_DATA['accelerometer']
-        gyroscope = self.board.SENSOR_DATA['gyroscope']
-        #voltage = board.ANALOG['voltage']
-        #attitude = board.SENSOR_DATA['kinematics']
+            accelerometer = self.board.SENSOR_DATA['accelerometer']
+            gyroscope = self.board.SENSOR_DATA['gyroscope']
 
-        print(accelerometer)
-        print(gyroscope)
+            print(accelerometer)
+            print(gyroscope)
 
-class MultiWiiController(ControllerBase):
-    someGain = 0
+    def set(self):
+        print('MultiWiiInterface.set placeholder')
+        #with self.board:
+            # disarm
+            #CMDS['aux1'] = 1000
+            #board.send_RAW_RC([CMDS[ki] for ki in CMDS_ORDER])
 
-def multiwii_get_test():
-    print('MultiWii Get Test')
+            # set throttle
+            #CMDS['throttle'] = 988
 
-def multiwii_set_test():
-    print('MultiWii Set Test')
+            # arm
+            #CMDS['aux1'] = 1800
+            #board.send_RAW_RC([CMDS[ki] for ki in CMDS_ORDER])
+
+            # mode
+            #CMDS['aux2'] <= 1300 # Horizon mode
+            #1700 > CMDS['aux2'] > 1300 # Flip Mode
+            #CMDS['aux2'] >= 1700 # Angle Mode
+            #board.send_RAW_RC([CMDS[ki] for ki in CMDS_ORDER])
+
+            # roll
+            #CMDS['roll'] = 1500
+            #board.send_RAW_RC([CMDS[ki] for ki in CMDS_ORDER])
+
+            # pitch
+            #CMDS['pitch'] = 1500
+            #board.send_RAW_RC([CMDS[ki] for ki in CMDS_ORDER])
+
+class MultiWiiSim(FCInterfaceBase):
+
+    def __init__(self):
+        print('MultiWiiSim init')
+
+    def get(self):
+        print('MultiWiiSim get')
+    
+    def set(self):
+        print('MultiWiiSim set')
