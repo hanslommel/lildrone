@@ -1,4 +1,5 @@
 MultiWii Python package: https://pypi.org/project/MultiWii/
+nope use YAMSPy!
 
 Wifi MSP control (long raaaange): https://www.instructables.com/Long-Range-Wifi-PPM-MSP/
 
@@ -13,3 +14,6 @@ https://docs.quanser.com/quarc/documentation/multiwii_imu_block.html
 
 Enabling lidar maybe?
 https://github.com/betaflight/betaflight/issues/5245
+
+using Matek optical flow with this library maybe?
+https://github.com/pimoroni/pmw3901-python
