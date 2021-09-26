@@ -10,7 +10,7 @@ from mapping import Mapping
 from planning import Planning
 
 # some settings
-simulation = True
+simulation = False
 main_loop_dt = 1
 
 # some setup
