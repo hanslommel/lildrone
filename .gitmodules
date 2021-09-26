@@ -4,3 +4,6 @@
 [submodule "pyMultiWii"]
 	path = pyMultiWii
 	url = https://github.com/hanslommel/pyMultiWii.git
+[submodule "MIPI_Camera"]
+	path = MIPI_Camera
+	url = https://github.com/hanslommel/MIPI_Camera.git
