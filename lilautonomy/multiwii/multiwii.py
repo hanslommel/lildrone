@@ -21,9 +21,6 @@ class FCInterfaceBase:
     
     def set(self):
         print('FCInterfaceBase.set()')
-
-    def loop(self):
-        print('FCInterface.loop()')
     
     def start(self):
         with self._lock:
@@ -63,6 +60,9 @@ class MultiWiiInterface(FCInterfaceBase):
     def __init__(self):
         print('MultiWiiInterface init')
         self.board = MSPy(device="/dev/serial0", loglevel='WARNING', baudrate=500000)
+        self._loop_dt = 0.05 #0.005
+        self._get_dt = 0.1 #0.01
+        self._set_dt = 1 #0.01
 
     def get(self):
         with self.board:
@@ -101,6 +101,33 @@ class MultiWiiInterface(FCInterfaceBase):
             # pitch
             #CMDS['pitch'] = 1500
             #board.send_RAW_RC([CMDS[ki] for ki in CMDS_ORDER])
+    
+    
+    # def start(self):  -- using base class
+    # def stop(self):   -- using base class
+    
+    def loop(self):
+        while True:
+            with self._lock:
+                if self._running:
+                    self._loop_last = timelib.time()
+
+                    if self._loop_last > (self._get_last + self._get_dt):
+                        self._get_last = self._loop_last
+                        self.get()
+                    
+                    if self._loop_last > (self._set_last + self._set_dt):
+                        self._set_last = self._loop_last
+                        self.set()
+                    
+                    if timelib.time() < (self._loop_last + self._loop_dt):
+                        timelib.sleep(self._loop_last + self._loop_dt - timelib.time())
+                    else:
+                        print('MultiWiiInterface loop took too long')
+                else:
+                    print('Exiting MultiWiiInterface loop')
+                    break
+
 
 
 class MultiWiiSim(FCInterfaceBase):
