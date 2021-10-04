@@ -2,6 +2,7 @@
 from yamspy import MSPy
 import threading
 import time as timelib
+import shared_buffer
 
 class FCInterfaceBase:
     _lock = threading.Lock()
@@ -12,9 +13,11 @@ class FCInterfaceBase:
     _loop_last = timelib.time()
     _get_last = _loop_last
     _set_last = _loop_last
+    _sb = None
 
-    def __init__(self):
+    def __init__(self, sb):
         print('Initializing FCInterfaceBase')
+        self._sb = sb.getInstance()
 
     def get(self):
         print('FCInterfaceBase.get()')
@@ -57,12 +60,13 @@ class FCInterfaceBase:
 class MultiWiiInterface(FCInterfaceBase):
     board = None
 
-    def __init__(self):
+    def __init__(self, sb):
         print('MultiWiiInterface init')
         self.board = MSPy(device="/dev/serial0", loglevel='WARNING', baudrate=500000)
         self._loop_dt = 0.05 #0.005
         self._get_dt = 0.1 #0.01
         self._set_dt = 1 #0.01
+        super(MultiWiiInterface, self).__init__(sb)
 
     def get(self):
         with self.board:
@@ -137,14 +141,16 @@ class MultiWiiSim(FCInterfaceBase):
     MultiWii sim here and move the rest to a simulation package.
     """
 
-    def __init__(self):
+    def __init__(self, sb):
         print('MultiWiiSim init')
+        super(MultiWiiSim, self).__init__(sb)
 
     def get(self):
         print('MultiWiiSim get')
     
     def set(self):
         print('MultiWiiSim set')
+        print(self._sb)
     
     def loop(self):
         while True:

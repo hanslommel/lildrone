@@ -11,9 +11,11 @@ class StateEstimatorBase:
     _loop_last = timelib.time()
     _propagate_last = _loop_last
     _update_last = _loop_last
+    _sb = None
 
-    def __init__(self):
+    def __init__(self, sb):
         print('Initializing StateEstimatorBase')
+        self._sb = sb.getInstance()
 
     def propagate(self):
         print('StateEstimatorBase.propagate()')
@@ -57,5 +59,6 @@ class StateEstimatorBase:
                     break
 
 class StateEstimator(StateEstimatorBase):
-    def __init__(self):
+    def __init__(self, sb):
         print('Initializing StateEstimator')
+        super(StateEstimator, self).__init__(sb)

@@ -9,9 +9,11 @@ class MappingBase:
     _update_dt = 3 #0.25
     _loop_last = timelib.time()
     _update_last = _loop_last
+    _sb = None
 
-    def __init__(self):
+    def __init__(self, sb):
         print('Initializing MappingBase')
+        self._sb = sb.getInstance()
 
     def update(self):
         print('MappingBase.update()')
@@ -48,5 +50,6 @@ class MappingBase:
                     break
 
 class Mapping(MappingBase):
-    def __init__(self):
+    def __init__(self, sb):
         print('Initializing Mapping')
+        super(Mapping, self).__init__(sb)

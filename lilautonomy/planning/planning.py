@@ -1,6 +1,7 @@
 
 import threading
 import time as timelib
+import shared_buffer
 
 class PlanningBase:
     _lock = threading.Lock()
@@ -9,12 +10,15 @@ class PlanningBase:
     _replan_dt = 3 #0.1
     _loop_last = timelib.time()
     _replan_last = _loop_last
-
-    def __init__(self):
+    _sb = None
+    
+    def __init__(self, sb):
         print('Initializing PlanningBase')
-
+        self._sb = sb.getInstance()
+    
     def replan(self):
         print('PlanningBase.update()')
+        print(self._sb)
 
     def loop(self):
         print('PlanningBase.loop()')
@@ -48,5 +52,6 @@ class PlanningBase:
                     break
 
 class Planning(PlanningBase):
-    def __init__(self):
+    def __init__(self, sb):
         print('Initializing Planning')
+        super(Planning, self).__init__(sb)
