@@ -11,7 +11,7 @@ from planning import Planning
 from shared_buffer import SharedBuffer
 
 # some settings
-simulation = False
+simulation = True
 main_loop_dt = 1
 
 # create the shared buffer

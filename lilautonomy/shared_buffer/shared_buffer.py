@@ -12,17 +12,23 @@ class SharedBuffer:
     SharedBuffer class, and threads will access publishers through it.
     """
 
-    __instance = None
+    _instance = None
+    _registry = dict()
+
     @staticmethod 
     def getInstance():
         """ Static access method. """
-        if SharedBuffer.__instance == None:
+        if SharedBuffer._instance == None:
             SharedBuffer()
-        return SharedBuffer.__instance
+        return SharedBuffer._instance
+
     def __init__(self):
         """ Virtually private constructor. """
         print('Init SharedBuffer')
-        if SharedBuffer.__instance != None:
+        if SharedBuffer._instance != None:
             raise Exception("This class is a singleton!")
         else:
-            SharedBuffer.__instance = self
+            SharedBuffer._instance = self
+    
+    def register(self, pub, name):
+        self._registry[name] = pub

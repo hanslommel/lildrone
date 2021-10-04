@@ -1,4 +1,5 @@
-from . import ring_buffer
+from typing import Dict
+from .ring_buffer import RingBuffer
 
 class PublisherBase:
     """PublisherBase class.
@@ -11,4 +12,7 @@ class PublisherBase:
 
     def __init__(self, buffer_length):
         print('Init PublisherBase')
-        _buffer = ring_buffer.RingBuffer(buffer_length)
+        self._buffer = RingBuffer(buffer_length)
+    
+    def addOne(self, msg):
+        self._buffer.append(msg)
