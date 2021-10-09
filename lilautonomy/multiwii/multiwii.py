@@ -147,6 +147,7 @@ class MultiWiiSim(FCInterfaceBase):
 
     def __init__(self, sb):
         print('MultiWiiSim init')
+        self._get_dt = 1.0
         super(MultiWiiSim, self).__init__(sb)
 
     def get(self):

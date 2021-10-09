@@ -16,3 +16,11 @@ class StreamBase:
     
     def addOne(self, msg):
         self._buffer.append(msg)
+    
+    def getAll(self, time_start):
+        """ Get all messages after time_start, non-inclusive  """
+        messages = self._buffer.get()
+
+        # only messages after time_start
+        messages_out = [msg for msg in messages if msg._tov > time_start]
+        return messages_out

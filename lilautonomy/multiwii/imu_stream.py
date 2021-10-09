@@ -7,9 +7,10 @@ class IMUMessage(MessageBase):
 
     def __init__(self, tov, acceleration, rate):
         print('IMU Message')
-        self._tov = tov
         self._acceleration = acceleration
         self._rate = rate
+        super(IMUMessage, self).__init__(tov)
+
 
 class IMUStream(StreamBase):
     """IMU Stream class.

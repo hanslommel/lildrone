@@ -12,10 +12,13 @@ class StateEstimatorBase:
     _propagate_last = _loop_last
     _update_last = _loop_last
     _sb = None
+    _imu_stream = None
+    _last_imu = None
 
     def __init__(self, sb):
         print('Initializing StateEstimatorBase')
         self._sb = sb.getInstance()
+        self._last_imu = timelib.time()
 
     def propagate(self):
         print('StateEstimatorBase.propagate()')
@@ -35,6 +38,25 @@ class StateEstimatorBase:
         with self._lock:
             print('StateEstimatorBase Stop Running')
             self._running = False
+
+class StateEstimator(StateEstimatorBase):
+    def __init__(self, sb):
+        print('Initializing StateEstimator')
+        super(StateEstimator, self).__init__(sb)
+    
+    def propagate(self):
+        print('StateEstimator.propagate()')
+        # if we haven't already, connect to IMU stream
+        if self._imu_stream is None:
+            print('Connecting to IMU stream')
+            self._imu_stream = self._sb.connect("IMU")
+        
+        if self._imu_stream is not None:
+            imu_messages = self._imu_stream.getAll(self._last_imu)
+            print(f'Found {len(imu_messages)} new imu messages')
+            for msg in imu_messages:
+                if msg._tov > self._last_imu:
+                    self._last_imu = msg._tov 
     
     def loop(self):
         while True:
@@ -57,8 +79,3 @@ class StateEstimatorBase:
                 else:
                     print('Exiting StateEstimatorBase loop')
                     break
-
-class StateEstimator(StateEstimatorBase):
-    def __init__(self, sb):
-        print('Initializing StateEstimator')
-        super(StateEstimator, self).__init__(sb)

@@ -32,3 +32,11 @@ class SharedBuffer:
     
     def register(self, pub, name):
         self._registry[name] = pub
+    
+    def connect(self, name):
+        try:
+            return self._registry[name]
+        except KeyError:
+            print(f'SharedBuffer registry does not contain {name}')
+            return None
+        

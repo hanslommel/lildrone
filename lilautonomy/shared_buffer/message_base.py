@@ -4,5 +4,8 @@ class MessageBase:
 
     All message types will be derived from this.
     """
-    def __init__(self):
+    _tov = None
+
+    def __init__(self, tov):
         print('Init MessageBase')
+        self._tov = tov
