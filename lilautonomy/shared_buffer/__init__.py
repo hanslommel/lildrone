@@ -1,3 +1,3 @@
 from .shared_buffer import SharedBuffer
-from .publisher_base import PublisherBase
+from .stream_base import StreamBase
 from .message_base import MessageBase

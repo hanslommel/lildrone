@@ -1,17 +1,17 @@
 from typing import Dict
 from .ring_buffer import RingBuffer
 
-class PublisherBase:
-    """PublisherBase class.
+class StreamBase:
+    """StreamBase class.
 
-    Messages will be shared between threads via a publisher, publishers will be 
+    Messages will be shared between threads via a stream, streams will be 
     derived from this base class.
     """
 
     _buffer = None
 
     def __init__(self, buffer_length):
-        print('Init PublisherBase')
+        print('Init StreamBase')
         self._buffer = RingBuffer(buffer_length)
     
     def addOne(self, msg):

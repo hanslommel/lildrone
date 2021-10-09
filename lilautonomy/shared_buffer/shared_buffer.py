@@ -2,7 +2,7 @@
 import threading
 import time as timelib
 from . import message_base
-from . import publisher_base
+from . import stream_base
 
 
 class SharedBuffer:

@@ -3,7 +3,7 @@ from yamspy import MSPy
 import threading
 import time as timelib
 import shared_buffer
-from .imu_publisher import IMUMessage, IMUPublisher
+from .imu_stream import IMUMessage, IMUStream
 
 class FCInterfaceBase:
     _lock = threading.Lock()
@@ -15,13 +15,13 @@ class FCInterfaceBase:
     _get_last = _loop_last
     _set_last = _loop_last
     _sb = None
-    _imu_publisher = None
+    _imu_stream = None
 
     def __init__(self, sb):
         print('Initializing FCInterfaceBase')
         self._sb = sb.getInstance()
-        self._imu_publisher = IMUPublisher()
-        self._sb.register(self._imu_publisher, "IMU")
+        self._imu_stream = IMUStream()
+        self._sb.register(self._imu_stream, "IMU")
 
     def get(self):
         print('FCInterfaceBase.get()')
@@ -153,8 +153,8 @@ class MultiWiiSim(FCInterfaceBase):
         print('MultiWiiSim get')
         acceleration = [0, 0, 9.8]
         rate = [0, 0, 0]
-        msg = IMUMessage(acceleration, rate)
-        self._imu_publisher.addOne(msg)
+        msg = IMUMessage(timelib.time(), acceleration, rate)
+        self._imu_stream.addOne(msg)
     
     def set(self):
         print('MultiWiiSim set')
