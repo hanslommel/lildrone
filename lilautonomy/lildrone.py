@@ -10,8 +10,16 @@ from mapping import Mapping
 from planning import Planning
 from shared_buffer import SharedBuffer
 
+import argparse
+
+parser = argparse.ArgumentParser()
+parser.add_argument("--sim", help="use simulation",
+                    action="store_true")
+args = parser.parse_args()
+
 # some settings
-simulation = True
+simulation = args.sim
+
 main_loop_dt = 1
 
 # create the shared buffer
