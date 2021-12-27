@@ -42,6 +42,7 @@ add to this file:
 in YAMSPy files set serial to:
     "/dev/ttyAMA1"
 
+Flash iNav firmware with Mamba405US I2C version, version without I2C doesn't work!
 In iNAV:
     in ports:
         set UART5 to MSP
