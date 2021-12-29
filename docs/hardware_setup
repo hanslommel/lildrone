@@ -47,6 +47,7 @@ In iNAV:
         set UART5 to MSP
     in receiver:
         set receiver mode to MSP
+    these tabs don't seem to work on Mac, have to use linux laptop. maybe update iNav version?
 
 this worked!!!
 
