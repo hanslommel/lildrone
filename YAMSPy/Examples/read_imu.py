@@ -2,10 +2,14 @@ import sys
 import struct
 from yamspy import MSPy
 import logging
+import time
 
 
 serial_port = "/dev/ttyAMA1"
-logging.basicConfig(filename='imu.log', level=logging.INFO)
+logging.basicConfig(
+    filename='imu.log',
+    level=logging.INFO
+    )
 
 with MSPy(device=serial_port, loglevel='DEBUG', baudrate=115200) as board:
     if board == 1:
@@ -13,8 +17,9 @@ with MSPy(device=serial_port, loglevel='DEBUG', baudrate=115200) as board:
         sys.exit(1)
     else:
         i = 0
-        while i <= 1000:
+        while i <= 10000:
             if board.send_RAW_msg(MSPy.MSPCodes['MSP_RAW_IMU']):
+                time_start = time.time()
                 # $ + M + < + data_length + msg_code + data + msg_crc
                 # 6 bytes + data_length
                 # data_length: 9 x 2 = 18 bytes
@@ -35,6 +40,11 @@ with MSPy(device=serial_port, loglevel='DEBUG', baudrate=115200) as board:
                 board.SENSOR_DATA['gyroscope'][1] = converted_msg[4]
                 board.SENSOR_DATA['gyroscope'][2] = converted_msg[5]
 
-                print(converted_msg[:6])
-                logging.info(converted_msg[:6])
+                # add timestamp
+                timestamp = time.time()
+
+                imu_rate = time.time() - time_start
+
+                print([converted_msg[:6], timestamp, imu_rate])
+                logging.info([converted_msg[:6], timestamp, imu_rate])
                 i += 1
