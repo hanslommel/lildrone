@@ -66,7 +66,7 @@ class MultiWiiInterface(FCInterfaceBase):
 
     def __init__(self, sb):
         print('MultiWiiInterface init')
-        self.board = MSPy(device="/dev/serial0", loglevel='WARNING', baudrate=500000)
+        self.board = MSPy(device="/dev/ttyAMA1", loglevel='WARNING', baudrate=500000)
         self._loop_dt = 0.05 #0.005
         self._get_dt = 0.1 #0.01
         self._set_dt = 1 #0.01
@@ -82,33 +82,61 @@ class MultiWiiInterface(FCInterfaceBase):
             print(accelerometer)
             print(gyroscope)
 
-    def set(self):
-        print('MultiWiiInterface.set placeholder')
-        #with self.board:
-            # disarm
-            #CMDS['aux1'] = 1000
-            #board.send_RAW_RC([CMDS[ki] for ki in CMDS_ORDER])
+    def set(self, channel, val):
+        #print('MultiWiiInterface.set placeholder')
+        CMDS = {
+                'roll':     1500,
+                'pitch':    1500,
+                'throttle': 900,
+                'yaw':      1500,
+                'aux1':     1000,
+                'aux2':     1000
+                }
 
-            # set throttle
-            #CMDS['throttle'] = 988
+        CMDS_ORDER = ['roll', 'pitch', 'throttle', 'yaw', 'aux1', 'aux2']
 
-            # arm
-            #CMDS['aux1'] = 1800
-            #board.send_RAW_RC([CMDS[ki] for ki in CMDS_ORDER])
+        # send these messages so the board doesn't RX failsafe
+        command_list = ['MSP_API_VERSION', 'MSP_FC_VARIANT', 'MSP_FC_VERSION', 'MSP_BUILD_INFO', 
+                        'MSP_BOARD_INFO', 'MSP_UID', 'MSP_ACC_TRIM', 'MSP_NAME', 'MSP_STATUS', 'MSP_STATUS_EX',
+                        'MSP_BATTERY_CONFIG', 'MSP_BATTERY_STATE', 'MSP_BOXNAMES']
+        with self.board as board:
+            if board == 1: # an error occurred...
+                print("Returned 1, unable to connect to FC.")
+                return
 
-            # mode
-            #CMDS['aux2'] <= 1300 # Horizon mode
-            #1700 > CMDS['aux2'] > 1300 # Flip Mode
-            #CMDS['aux2'] >= 1700 # Angle Mode
-            #board.send_RAW_RC([CMDS[ki] for ki in CMDS_ORDER])
+            else:
+                for msg in command_list: 
+                    if board.send_RAW_msg(MSPy.MSPCodes[msg], data=[]):
+                        dataHandler = board.receive_msg()
+                        board.process_recv_data(dataHandler)
 
-            # roll
-            #CMDS['roll'] = 1500
-            #board.send_RAW_RC([CMDS[ki] for ki in CMDS_ORDER])
+            CMDS[channel] = val
+            board.send_RAW_RC([CMDS[ki] for ki in CMDS_ORDER])
 
-            # pitch
-            #CMDS['pitch'] = 1500
-            #board.send_RAW_RC([CMDS[ki] for ki in CMDS_ORDER])
+            # # disarm
+            # CMDS['aux1'] = 1000
+            # board.send_RAW_RC([CMDS[ki] for ki in CMDS_ORDER])
+
+            # # set throttle
+            # CMDS['throttle'] = 988
+
+            # # arm
+            # CMDS['aux1'] = 1800
+            # board.send_RAW_RC([CMDS[ki] for ki in CMDS_ORDER])
+
+            # # mode
+            # CMDS['aux2'] <= 1300 # Horizon mode
+            # 1700 > CMDS['aux2'] > 1300 # Flip Mode
+            # CMDS['aux2'] >= 1700 # Angle Mode
+            # board.send_RAW_RC([CMDS[ki] for ki in CMDS_ORDER])
+
+            # # roll
+            # CMDS['roll'] = 1500
+            # board.send_RAW_RC([CMDS[ki] for ki in CMDS_ORDER])
+
+            # # pitch
+            # CMDS['pitch'] = 1500
+            # board.send_RAW_RC([CMDS[ki] for ki in CMDS_ORDER])
     
     
     # def start(self):  -- using base class

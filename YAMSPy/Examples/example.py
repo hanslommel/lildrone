@@ -29,6 +29,7 @@ contained or linked from here.
 import sys
 import time
 import serial
+import logging
 
 from yamspy import MSPy
 
@@ -51,7 +52,7 @@ avoid_list = ['MSP_DATAFLASH_ERASE','MSP_DATAFLASH_READ','MSP_EEPROM_WRITE']
 # https://pyserial.readthedocs.io/en/latest/shortintro.html
 #
 #
-serial_port = "/dev/ttyACM0"
+serial_port = "/dev/ttyAMA1"
 
 # As you run this script, it will save a file MSPy.log with a very detailed info about all the 
 # things sent and received through the serial port because of the argument loglevel='DEBUG'. 
