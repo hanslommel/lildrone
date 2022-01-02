@@ -17,3 +17,6 @@ https://github.com/betaflight/betaflight/issues/5245
 
 using Matek optical flow with this library maybe?
 https://github.com/pimoroni/pmw3901-python
+
+build custom firmware to enable MSP override with RC: https://github.com/iNavFlight/inav/issues/4084
+how do I build custom firmware??
