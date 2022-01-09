@@ -17,3 +17,14 @@ https://github.com/betaflight/betaflight/issues/5245
 
 using Matek optical flow with this library maybe?
 https://github.com/pimoroni/pmw3901-python
+
+build custom firmware to enable MSP override with RC: https://github.com/iNavFlight/inav/issues/4084
+also have to change  _Static_assert(ARRAYLEN(menuOsdElemsEntries) - 2 + 1 == OSD_ITEM_COUNT, "missing OSD elements in CMS");
+to something like  _Static_assert(ARRAYLEN(menuOsdElemsEntries) - 2 + 1 < OSD_ITEM_COUNT, "missing OSD elements in CMS");
+to build, in the inav folder:
+
+
+Custom firmware will be tagged as 5.0.0 so we'll need the dev configurator:
+http://seyrsnys.myzen.co.uk/inav-configurator-next/
+./build.sh MAMBAF405US_I2C
+
