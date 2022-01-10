@@ -6,11 +6,20 @@
 
 - Next:
   - (Justin) check out range data on betaflight (UART)
-  - (Justin) check out optical flow data on betaflight (UART)
-  - (Justin) RC flight
+  - (Justin) flight time RX input switching (RC Override)
   - (Pete) get all the data on Pi
     - MultiWii (MSP)
   - (Pete) log all the data on Pi
+  - (Pete) solder usb-c to flight controller - see links for the diagram (draw.io diagram)
+  - (Pete) mount and solder the optical flow sensor
+    5V and GND, TX2 and RX2
+  - (Pete) Solder TX5 and RX5 to GPIO pin connectors for Pi (may have to order the pin connectors)
+  - (Pete) Try to image the mamba with iNav - get inav configurator (see links doc) dev version
+    - Justin's instructions are at the bottom of links
+
+- Done: 
+  - (Justin) check out optical flow data on betaflight (UART)
+  - (Justin) RC flight
 
 ##Software
 - Justin and Pete- Install OS on Pi - RASPBIAN  -DONE-
