@@ -9,6 +9,12 @@ https://github.com/iNavFlight/inav/wiki/MSP-V2
 lildrone system flowchart:
 https://drive.google.com/file/d/1l15bH1IFUwRLjBwumo6ilKirpo2iZqis/view?usp=sharing
 
+lildrone autonomy class diagram:
+https://drive.google.com/file/d/1NzRtgO5ifQYxKSk8Fef-b3WayeufrIQC/view?usp=sharing
+
+lildrone autonomy structure diagram:
+https://drive.google.com/file/d/10NsvcqlPxexcTTl86E4TRIu232x3eRFq/view?usp=sharing
+
 MultiWii getting IMU data:
 https://docs.quanser.com/quarc/documentation/multiwii_imu_block.html
 
