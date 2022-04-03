@@ -1,4 +1,3 @@
-
 from yamspy import MSPy
 import threading
 import time as timelib
@@ -134,51 +133,4 @@ class MultiWiiInterface(FCInterfaceBase):
                         print('MultiWiiInterface loop took too long')
                 else:
                     print('Exiting MultiWiiInterface loop')
-                    break
-
-
-
-class MultiWiiSim(FCInterfaceBase):
-    """MultiWii simulation class.
-
-    In fact, this is the entire simulation for now.  Later we should reorganize and just have the 
-    MultiWii sim here and move the rest to a simulation package.
-    """
-
-    def __init__(self, sb):
-        print('MultiWiiSim init')
-        self._get_dt = 1.0
-        super(MultiWiiSim, self).__init__(sb)
-
-    def get(self):
-        print('MultiWiiSim get')
-        acceleration = [0, 0, 9.8]
-        rate = [0, 0, 0]
-        msg = IMUMessage(timelib.time(), acceleration, rate)
-        self._imu_stream.addOne(msg)
-    
-    def set(self):
-        print('MultiWiiSim set')
-        print(self._sb)
-    
-    def loop(self):
-        while True:
-            with self._lock:
-                if self._running:
-                    self._loop_last = timelib.time()
-
-                    if self._loop_last > (self._get_last + self._get_dt):
-                        self._get_last = self._loop_last
-                        self.get()
-                    
-                    if self._loop_last > (self._set_last + self._set_dt):
-                        self._set_last = self._loop_last
-                        self.set()
-                    
-                    if timelib.time() < (self._loop_last + self._loop_dt):
-                        timelib.sleep(self._loop_last + self._loop_dt - timelib.time())
-                    else:
-                        print('MultiWiiSim loop took too long')
-                else:
-                    print('Exiting MultiWiiSim loop')
                     break

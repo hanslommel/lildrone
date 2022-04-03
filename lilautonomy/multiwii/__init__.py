@@ -1,1 +1,1 @@
-from .multiwii import MultiWiiInterface, MultiWiiSim
+from .multiwii import MultiWiiInterface, FCInterfaceBase

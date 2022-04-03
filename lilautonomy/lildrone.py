@@ -4,7 +4,8 @@ import logging
 import threading
 import time as timelib
 
-from multiwii import MultiWiiInterface, MultiWiiSim
+from multiwii import MultiWiiInterface 
+from lilsim import LilSim
 from SE import StateEstimator
 from mapping import Mapping
 from planning import Planning
@@ -19,7 +20,7 @@ sb = SharedBuffer()
 
 # some setup
 if simulation:
-    FCInterface = MultiWiiSim(sb)
+    FCInterface = LilSim(sb)
 else:
     FCInterface = MultiWiiInterface(sb)
 
