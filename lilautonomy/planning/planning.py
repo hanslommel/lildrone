@@ -1,4 +1,4 @@
-
+from .setpoint_stream import SetpointStream, SetpointMessage
 import threading
 import time as timelib
 import shared_buffer
@@ -15,10 +15,17 @@ class PlanningBase:
     def __init__(self, sb):
         print('Initializing PlanningBase')
         self._sb = sb.getInstance()
+        self._setpoint_stream = SetpointStream()
+        self._sb.register(self._setpoint_stream, "Setpoint")
     
     def replan(self):
         print('PlanningBase.update()')
-        print(self._sb)
+        pitch = 1500
+        roll = 1500
+        yaw = 1500
+        thrust = 1500
+        msg = SetpointMessage(timelib.time(), roll, pitch, yaw, thrust)
+        self._setpoint_stream.addOne(msg)
 
     def loop(self):
         print('PlanningBase.loop()')

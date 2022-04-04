@@ -20,7 +20,7 @@ sb = SharedBuffer()
 
 # some setup
 if simulation:
-    FCInterface = LilSim(sb)
+    FCInterface = LilSim(sb, headless=True)
 else:
     FCInterface = MultiWiiInterface(sb)
 
