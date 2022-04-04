@@ -83,31 +83,42 @@ class MultiWiiInterface(FCInterfaceBase):
 
     def set(self):
         print('MultiWiiInterface.set placeholder')
-        #with self.board:
+        # TODO copy this from lilsim, try it on real quad
+        CMDS = {
+                'roll':     1500,
+                'pitch':    1500,
+                'throttle': 900,
+                'yaw':      1500,
+                'aux1':     1000,
+                'aux2':     1000
+                }
+        CMDS_ORDER = ['roll', 'pitch', 'throttle', 'yaw', 'aux1', 'aux2']
+
+        with self.board as board:
             # disarm
-            #CMDS['aux1'] = 1000
-            #board.send_RAW_RC([CMDS[ki] for ki in CMDS_ORDER])
+            CMDS['aux1'] = 1000
+            board.send_RAW_RC([CMDS[ki] for ki in CMDS_ORDER])
 
             # set throttle
-            #CMDS['throttle'] = 988
+            CMDS['throttle'] = 988
 
             # arm
-            #CMDS['aux1'] = 1800
-            #board.send_RAW_RC([CMDS[ki] for ki in CMDS_ORDER])
+            CMDS['aux1'] = 1800
+            board.send_RAW_RC([CMDS[ki] for ki in CMDS_ORDER])
 
             # mode
-            #CMDS['aux2'] <= 1300 # Horizon mode
-            #1700 > CMDS['aux2'] > 1300 # Flip Mode
-            #CMDS['aux2'] >= 1700 # Angle Mode
-            #board.send_RAW_RC([CMDS[ki] for ki in CMDS_ORDER])
+            CMDS['aux2'] <= 1300 # Horizon mode
+            1700 > CMDS['aux2'] > 1300 # Flip Mode
+            CMDS['aux2'] >= 1700 # Angle Mode
+            board.send_RAW_RC([CMDS[ki] for ki in CMDS_ORDER])
 
             # roll
-            #CMDS['roll'] = 1500
-            #board.send_RAW_RC([CMDS[ki] for ki in CMDS_ORDER])
+            CMDS['roll'] = 1500
+            board.send_RAW_RC([CMDS[ki] for ki in CMDS_ORDER])
 
             # pitch
-            #CMDS['pitch'] = 1500
-            #board.send_RAW_RC([CMDS[ki] for ki in CMDS_ORDER])
+            CMDS['pitch'] = 1500
+            board.send_RAW_RC([CMDS[ki] for ki in CMDS_ORDER])
     
     
     # def start(self):  -- using base class
