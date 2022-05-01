@@ -5,6 +5,8 @@ from multiwii import FCInterfaceBase
 import time as timelib
 from multiwii.imu_stream import IMUMessage, IMUStream
 
+from .quadrotor import Quadrotor
+
 
 class LilSim(FCInterfaceBase):
     """Simulation class.
@@ -21,6 +23,8 @@ class LilSim(FCInterfaceBase):
         self._setpoint_stream = None
         self._last_setpoint = timelib.time()
         self._headless = headless
+
+        self._quadrotor = Quadrotor()
 
     def main(self):
         # this is the main simulation loop
