@@ -52,7 +52,6 @@ class Quadrotor:
 
         # M = I*alpha + wxIw
 
-
 # TODO
 # flight controller model
 # motor models
@@ -68,6 +67,12 @@ class Quadrotor:
 #     """
 
 def inertia_from_pointmasses(masses):
+    """ Helper function to compute mass and inertia matrix from a set of point
+    masses.
+
+    Takes as input a list of masses, each of the form:
+    [x, y, z, mass] in [m, m, m, kg]
+    """
     mass = 0.0
     Ixx = 0.0
     Ixy = 0.0
