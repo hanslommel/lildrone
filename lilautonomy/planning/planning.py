@@ -6,8 +6,8 @@ import shared_buffer
 class PlanningBase:
     _lock = threading.Lock()
     _running = False
-    _loop_dt = 0.1 #0.005
-    _replan_dt = 3 #0.1
+    _loop_dt = 0.01 #0.005
+    _replan_dt = 0.1
     _loop_last = timelib.time()
     _replan_last = _loop_last
     _sb = None
@@ -23,7 +23,7 @@ class PlanningBase:
         pitch = 1500
         roll = 1500
         yaw = 1500
-        thrust = 1500
+        thrust = 1600
         msg = SetpointMessage(timelib.time(), roll, pitch, yaw, thrust)
         self._setpoint_stream.addOne(msg)
 

@@ -17,12 +17,14 @@ class LilSim(FCInterfaceBase):
     def __init__(self, sb, headless):
         print('LilSim init')
         self._get_dt = 1.0
-        self._main_dt = 0.2
+        self._main_dt = 0.1
         super(LilSim, self).__init__(sb)
         self._main_last = self._loop_last
         self._setpoint_stream = None
         self._last_setpoint = timelib.time()
         self._headless = headless
+        self._sim_speed = 1
+        self._loop_dt = self._main_dt * 0.1
 
         self._quadrotor = Quadrotor()
 
@@ -30,7 +32,8 @@ class LilSim(FCInterfaceBase):
         # this is the main simulation loop
         # TODO compute force and moment from states and setpoint
         # TODO kinematics from force and moment
-        print("main running")
+        self._quadrotor.propagate(self._sim_speed * self._main_dt)
+
         if not self._headless:
             self.show()
 
@@ -56,10 +59,7 @@ class LilSim(FCInterfaceBase):
             for msg in setpoint_messages:
                 if msg._tov > self._last_setpoint:
                     self._last_setpoint = msg._tov
-                    print(f"Roll: {msg._roll}")
-                    print(f"Pitch: {msg._pitch}")
-                    print(f"Yaw: {msg._yaw}")
-                    print(f"Thrust: {msg._thrust}")
+                    self._quadrotor.set_rpyt(msg._roll, msg._pitch, msg._yaw, msg._thrust)
 
     def show():
         # make visualizer
