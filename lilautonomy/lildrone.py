@@ -4,6 +4,7 @@ import logging
 import threading
 import time as timelib
 
+from vpython import *
 from multiwii import MultiWiiInterface 
 from lilsim import LilSim
 from SE import StateEstimator
@@ -48,6 +49,11 @@ time = start_time
 while time < start_time + 10:
     print(f'time = {time}')
     print('')
+
+    # create a vpython box object above
+    # publish vehicle states in lilsim.py
+    # add a subscriber to get them here
+    # update box states here with box.rotate() or something
 
     timelib.sleep(time + main_loop_dt - timelib.time())
 
