@@ -12,7 +12,7 @@ SLOW_MSGS_LOOP_TIME = 1/5 # these messages take a lot of time slowing down the l
 NO_OF_CYCLES_AVERAGE_GUI_TIME = 10
 
 # serial port for flight controller
-SERIAL_PORT = "/dev/serial0"
+SERIAL_PORT = "/dev/ttyAMA1"
 
 CMDS = {
         'roll':     1500,

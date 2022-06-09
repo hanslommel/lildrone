@@ -65,7 +65,7 @@ class MultiWiiInterface(FCInterfaceBase):
 
     def __init__(self, sb):
         print('MultiWiiInterface init')
-        self.board = MSPy(device="/dev/serial0", loglevel='WARNING', baudrate=500000)
+        self.board = MSPy(device="/dev/ttyAMA1", loglevel='WARNING', baudrate=115200)
         self._loop_dt = 0.05 #0.005
         self._get_dt = 0.1 #0.01
         self._set_dt = 1 #0.01

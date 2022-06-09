@@ -39,7 +39,7 @@ from yamspy import MSPy
 # https://pyserial.readthedocs.io/en/latest/shortintro.html
 #
 #
-serial_port = "/dev/ttyS0"
+serial_port = "/dev/ttyAMA1"
 
 with MSPy(device=serial_port, loglevel='DEBUG', baudrate=115200) as board:
     # Read info from the FC
