@@ -1,54 +1,12 @@
-"""simpleUI.py: Simple UI (toy one really) to test YAMSPy using a SSH connection.
-
-Copyright (C) 2020 Ricardo de Azambuja
-
-This file is part of YAMSPy.
-
-YAMSPy is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-YAMSPy is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with YAMSPy.  If not, see <https://www.gnu.org/licenses/>.
-
-
-WARNING:
-This UI is not fit for flying your drone, it is only useful for testing stuff in a safe place, ok?
-
-Acknowledgement:
-This work was possible thanks to the financial support from IVADO.ca (postdoctoral scholarship 2019/2020).
-
-Disclaimer (adapted from Wikipedia):
-None of the authors, contributors, supervisors, administrators, employers, friends, family, vandals, or anyone else 
-connected (or not) with this project, in any way whatsoever, can be made responsible for your use of the information (code) 
-contained or linked from here.
-
-
-TODO:
-1) The integrator makes it too hard to control things (it winds up). Probably a non-linear thing would be helpful here...
-2) Everything is far from optimal so it could be improved... but it's a simpleUI example after all ;)
-"""
-
-__author__ = "Ricardo de Azambuja"
-__copyright__ = "Copyright 2020, MISTLab.ca"
-__credits__ = [""]
-__license__ = "GPL"
-__version__ = "0.0.1"
-__maintainer__ = "Ricardo de Azambuja"
-__email__ = "ricardo.azambuja@gmail.com"
-__status__ = "Development"
-
+import struct
 import time
 import curses
 from collections import deque
 from itertools import cycle
 
+import multiprocessing
+from queue import Empty
+import ui_realsense_control
 from yamspy import MSPy
 
 # Max periods for:
@@ -57,22 +15,38 @@ SLOW_MSGS_LOOP_TIME = 1/5 # these messages take a lot of time slowing down the l
 
 NO_OF_CYCLES_AVERAGE_GUI_TIME = 10
 
-
-#
-# On Linux, your serial port will probably be something like
-# /dev/ttyACM0 or /dev/ttyS0 or the same names with numbers different from 0
-#
-# On Windows, I would expect it to be 
-# COM1 or COM2 or COM3...
-#
-# This library uses pyserial, so if you have more questions try to check its docs:
-# https://pyserial.readthedocs.io/en/latest/shortintro.html
-#
-#
 SERIAL_PORT = "/dev/ttyAMA1"
 
+def realsense(out_q):
+    ui_realsense_control.main(out_q, testing=False)
+
+def stop(pool):
+    pool.terminate()
+    pool.join()
+    exit(0)
+
+def altitude(board):
+    if board.send_RAW_msg(MSPy.MSPCodes['MSP_SONAR'], data=[]):
+        # 2. Response msg from the flight controller is received
+        dataHandler = board.receive_msg()
+        # 3. The msg is parsed
+        board.process_recv_data(dataHandler)
+        # 4. After the parser, the instance is populated.
+        # In this example, SENSOR_DATA has its altitude value updated.
+        return board.SENSOR_DATA['sonar']
+
+def fast_read_altitude(board):
+    # Request altitude
+    if board.send_RAW_msg(MSPy.MSPCodes['MSP_SONAR'], data=[]):
+        # $ + M + < + data_length + msg_code + data + msg_crc
+        # 6 bytes + data_length
+        data_length = 4
+        msg = board.receive_raw_msg(size = (6+data_length))[5:]
+        converted_msg = struct.unpack('<i', msg[:-1])[0]
+        return round((converted_msg / 100.0), 2) # correct scale factor
+
 def run_curses(external_function):
-    result=1
+    result = 1
 
     try:
         # get the curses screen window
@@ -90,8 +64,8 @@ def run_curses(external_function):
         # map arrow keys to special values
         screen.keypad(True)
 
-        screen.addstr(1, 0, "Press 'q' to quit, 'r' to reboot, 'm' to change mode, 'a' to arm, 'd' to disarm and arrow keys to control", curses.A_BOLD)
-        
+        screen.addstr(1, 0, "Press 'q' to quit, 'r' to reboot, 'm' to change mode, 'a' to arm, 'd' to disarm, 'n' for autonomous and arrow keys to control", curses.A_BOLD)
+
         result = external_function(screen)
 
     finally:
@@ -109,14 +83,30 @@ def keyboard_controller(screen):
             'throttle': 900,
             'yaw':      1500,
             'aux1':     1000,
-            'aux2':     1000
+            'aux2':     1000,
+            'aux3':     1000,
+            'loop':     0
             }
 
+    try:
+    # Create the shared queue and launch both threads
+        manager = multiprocessing.Manager()
+        q = manager.Queue()
+        pool = multiprocessing.Pool()
+        t1 = pool.apply_async(realsense, [q])
+        time.sleep(5)
+
+    except KeyboardInterrupt:
+        # item = "land"
+        # q.put(item)
+        # time.sleep(5)
+        pool.terminate()
+        pool.join()
+
     # This order is the important bit: it will depend on how your flight controller is configured.
-    # Below it is considering the flight controller is set to use AETR.
-    # The names here don't really matter, they just need to match what is used for the CMDS dictionary.
+    # Below it is assuming the flight controller is set to use AETR.
     # In the documentation, iNAV uses CH5, CH6, etc while Betaflight goes AUX1, AUX2...
-    CMDS_ORDER = ['roll', 'pitch', 'throttle', 'yaw', 'aux1', 'aux2']
+    CMDS_ORDER = ['roll', 'pitch', 'throttle', 'yaw', 'aux1', 'aux2', 'aux3', 'loop']
 
     # "print" doesn't work with curses, use addstr instead
     try:
@@ -167,20 +157,22 @@ def keyboard_controller(screen):
 
             cursor_msg = ""
             last_loop_time = last_slow_msg_time = last_cycleTime = time.time()
+
+            # bool to trigger realsense_control
+            autonomous = False
+            altitude = 0
+            takeoff = False
+            land = False
+
             while True:
                 start_time = time.time()
 
                 char = screen.getch() # get keypress
                 curses.flushinp() # flushes buffer
-                
 
-                #
                 # Key input processing
-                #
 
-                #
                 # KEYS (NO DELAYS)
-                #
                 if char == ord('q') or char == ord('Q'):
                     break
 
@@ -199,27 +191,44 @@ def keyboard_controller(screen):
                     cursor_msg = 'Sending Arm command...'
                     CMDS['aux1'] = 1800
 
-                #
                 # The code below is expecting the drone to have the
                 # modes set accordingly since everything is hardcoded.
-                #
+
+                # this one crashes the program?
                 elif char == ord('m') or char == ord('M'):
+                    # autonomous = False
+                    # CMDS['aux2'] = 1000
+                    # CMDS = {
+                    #             'roll':     1500,
+                    #             'pitch':    1500,
+                    #             'throttle': 1450,
+                    #             'yaw':      1500,
+                    #             'aux1':     1800,
+                    #             'aux2':     900,
+                    #             'loop':     0
+                    #             }
                     if CMDS['aux2'] <= 1300:
-                        cursor_msg = 'Horizon Mode...'
+                        cursor_msg = 'Horizon Mode 1...'
                         CMDS['aux2'] = 1500
-                    elif 1700 > CMDS['aux2'] > 1300:
-                        cursor_msg = 'Flip Mode...'
-                        CMDS['aux2'] = 2000
-                    elif CMDS['aux2'] >= 1700:
-                        cursor_msg = 'Angle Mode...'
-                        CMDS['aux2'] = 1000
+                    elif 1700 > CMDS['aux1'] > 1300:
+                        cursor_msg = 'Horizon Mode 2...'
+                        CMDS['aux2'] = 1800
+                    elif CMDS['aux1'] >= 1700:
+                        cursor_msg = 'Horizon Mode 3...'
+                        CMDS['aux2'] = 1300
+
+                elif char == ord('b') or char == ord('B'):
+                    autonomous = False
+                    CMDS['aux3'] = 1000
 
                 elif char == ord('w') or char == ord('W'):
                     CMDS['throttle'] = CMDS['throttle'] + 10 if CMDS['throttle'] + 10 <= 2000 else CMDS['throttle']
+                    save_throttle = save_throttle + 10
                     cursor_msg = 'W Key - throttle(+):{}'.format(CMDS['throttle'])
 
                 elif char == ord('e') or char == ord('E'):
                     CMDS['throttle'] = CMDS['throttle'] - 10 if CMDS['throttle'] - 10 >= 1000 else CMDS['throttle']
+                    save_throttle = save_throttle - 10
                     cursor_msg = 'E Key - throttle(-):{}'.format(CMDS['throttle'])
 
                 elif char == curses.KEY_RIGHT:
@@ -238,6 +247,37 @@ def keyboard_controller(screen):
                     CMDS['pitch'] = CMDS['pitch'] - 10 if CMDS['pitch'] - 10 >= 1000 else CMDS['pitch']
                     cursor_msg = 'Down Key - pitch(-):{}'.format(CMDS['pitch'])
 
+                elif char == ord('t') or char == ord('T'):
+                    takeoff = True
+                    land = False
+                    cursor_msg = 'TAKEOFF'
+
+                elif char == ord('l') or char == ord('L'):
+                    land = True
+                    takeoff = False
+                    cursor_msg = 'LAND'
+
+                elif char == ord('n'):
+                    autonomous = True
+                    CMDS['aux3'] = 2000
+                    cursor_msg = 'Autonomous mode - Active'
+
+                # save throttle value to overwrite command from queue until it's reliable
+                save_throttle = CMDS['throttle']
+
+                if takeoff and altitude < 0.5 and altitude != -0.01 and save_throttle < 1500:
+                    save_throttle = save_throttle + 1
+                    CMDS['throttle'] = save_throttle
+                    CMDS['pitch'] = 1500
+
+                elif altitude > 0.5:
+                    if save_throttle > 1300:
+                        save_throttle = save_throttle - 1
+                        CMDS['throttle'] = save_throttle
+
+                if land and save_throttle > 1000:
+                    save_throttle = save_throttle - 1
+                    CMDS['throttle'] = save_throttle
                 #
                 # IMPORTANT MESSAGES (CTRL_LOOP_TIME based)
                 #
@@ -284,8 +324,12 @@ def keyboard_controller(screen):
                         screen.addstr(5, 50, "armingDisableFlags: {}".format(board.process_armingDisableFlags(board.CONFIG['armingDisableFlags'])))
                         screen.clrtoeol()
 
-                        screen.addstr(6, 0, "cpuload: {}".format(board.CONFIG['cpuload']))
+                        # screen.addstr(6, 0, "cpuload: {}".format(board.CONFIG['cpuload']))
+                        # screen.clrtoeol()
+                        altitude = fast_read_altitude(board)
+                        screen.addstr(6, 0, "lidar altitude: {}".format(altitude))
                         screen.clrtoeol()
+
                         screen.addstr(6, 50, "cycleTime: {}".format(board.CONFIG['cycleTime']))
                         screen.clrtoeol()
 
@@ -308,6 +352,19 @@ def keyboard_controller(screen):
                                                                                                 1/(sum(average_cycle)/len(average_cycle))))
                     screen.clrtoeol()
 
+                    if autonomous:
+                        if q.qsize() > 10:
+                            try:
+                                CMDS = q.get()
+                                CMDS['throttle'] = save_throttle
+                                cursor_msg = 'Autonomous - yaw: {}, pitch: {}, loop number: {}'.format(CMDS['yaw'], CMDS['pitch'], CMDS['loop'])
+                                if altitude < 0.3:
+                                    CMDS['pitch'] = 1500
+                            except q.Empty:
+                                cursor_msg = 'No messages found in queue! Loop number: {}'.format(CMDS['loop'])
+                        else:
+                            cursor_msg = 'Queue too short, waiting for it to fill...'
+
                     screen.addstr(3, 0, cursor_msg)
                     screen.clrtoeol()
                     
@@ -323,6 +380,7 @@ def keyboard_controller(screen):
     finally:
         screen.addstr(5, 0, "Disconnected from the FC!")
         screen.clrtoeol()
+        stop(pool)
 
 if __name__ == "__main__":
     run_curses(keyboard_controller)

@@ -1,6 +1,5 @@
 import multiprocessing
 import time
-import random
 import testing
 import realsense_control
 import keyboard

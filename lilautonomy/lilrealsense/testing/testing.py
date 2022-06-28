@@ -1,5 +1,4 @@
 import time
-from collections import deque
 from itertools import cycle
 import queue
 

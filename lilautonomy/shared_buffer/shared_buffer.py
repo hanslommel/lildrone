@@ -4,6 +4,7 @@ import time as timelib
 from . import message_base
 from . import stream_base
 
+# we should try using queue
 
 class SharedBuffer:
     """SharedBuffer class.
