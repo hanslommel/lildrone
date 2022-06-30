@@ -64,7 +64,7 @@ def run_curses(external_function):
         # map arrow keys to special values
         screen.keypad(True)
 
-        screen.addstr(1, 0, "Press 'q' to quit, 'r' to reboot, 'm' to change mode, 'a' to arm, 'd' to disarm, 'n' for autonomous and arrow keys to control", curses.A_BOLD)
+        screen.addstr(1, 0, "Press 'q' to quit, 'r' to reboot, 'm' to change mode, 'a' to arm, 'd' to disarm, 'n' for autonomous, 't' for takeoff, 'l' to land", curses.A_BOLD)
 
         result = external_function(screen)
 
@@ -275,9 +275,13 @@ def keyboard_controller(screen):
                         save_throttle = save_throttle - 1
                         CMDS['throttle'] = save_throttle
 
-                if land and save_throttle > 1000:
+                if land and save_throttle > 900:
                     save_throttle = save_throttle - 1
+                    if save_throttle <= 1000:
+                        save_throttle = 1000
                     CMDS['throttle'] = save_throttle
+                    CMDS['pitch'] = 1500
+                    CMDS['yaw'] = 1500
                 #
                 # IMPORTANT MESSAGES (CTRL_LOOP_TIME based)
                 #

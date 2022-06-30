@@ -321,7 +321,7 @@ def keyboard_controller(screen):
                 average_cycle.popleft()
 
     finally:
-        screen.addstr(5, 0, "Disconneced from the FC!")
+        screen.addstr(5, 0, "Disconnected from the FC!")
         screen.clrtoeol()
 
 if __name__ == "__main__":
