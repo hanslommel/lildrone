@@ -1,6 +1,7 @@
 import time
 from collections import deque
 from itertools import cycle
+import pdb
 
 from yamspy import MSPy
 
@@ -45,80 +46,93 @@ def test_autopilot():
                     if board.send_RAW_msg(MSPy.MSPCodes[msg], data=[]):
                         dataHandler = board.receive_msg()
                         board.process_recv_data(dataHandler)
+                        board.send_RAW_RC([CMDS[ki] for ki in CMDS_ORDER])
 
             print('Sending Disarm command...')
             CMDS['aux1'] = 1000
             board.send_RAW_RC([CMDS[ki] for ki in CMDS_ORDER])
-            time.sleep(1)
+            time.sleep(3)
 
-            # print('Sending Reboot command...')
-            # board.reboot()
-            # time.sleep(0.5)
+            if board.send_RAW_msg(MSPy.MSPCodes['MSP_STATUS'], data=[]):
+                dataHandler = board.receive_msg()
+                board.process_recv_data(dataHandler)
+
+            print('Sending Reboot command...')
+            board.reboot()
+            time.sleep(10)
             # break
 
             # set throttle before arming:
-            CMDS['throttle'] = 988
+            CMDS['throttle'] = 900
             print('Sending Arm command, waiting 4 seconds')
             CMDS['aux1'] = 1800
             board.send_RAW_RC([CMDS[ki] for ki in CMDS_ORDER])
             time.sleep(4)
 
-            if CMDS['aux2'] <= 1300:
-                print('Horizon Mode...')
-                CMDS['aux2'] = 1500
-            elif 1700 > CMDS['aux2'] > 1300:
-                print('Flip Mode...')
-                CMDS['aux2'] = 2000
-            elif CMDS['aux2'] >= 1700:
-                print('Angle Mode...')
-                CMDS['aux2'] = 1000
-            board.send_RAW_RC([CMDS[ki] for ki in CMDS_ORDER])
-            time.sleep(2)
+            # if CMDS['aux2'] <= 1300:
+            #     print('Horizon Mode...')
+            #     CMDS['aux2'] = 1500
+            # elif 1700 > CMDS['aux2'] > 1300:
+            #     print('Flip Mode...')
+            #     CMDS['aux2'] = 2000
+            # elif CMDS['aux2'] >= 1700:
+            #     print('Angle Mode...')
+            #     CMDS['aux2'] = 1000
+            # board.send_RAW_RC([CMDS[ki] for ki in CMDS_ORDER])
+            # time.sleep(2)
 
-            # test throttling up
+            # test throttling up and down
             for i in range(988, 1500, 5):
                 CMDS['throttle'] = i
                 print('throttle up:{}'.format(CMDS['throttle']))
                 board.send_RAW_RC([CMDS[ki] for ki in CMDS_ORDER])
-                time.sleep(0.1)
+                time.sleep(0.05)
 
-            # test roll
-            CMDS['roll'] = 1500
-            for i in range(1500, 1800, 5):
-                CMDS['roll'] = i
-                print('rolling:{}'.format(CMDS['roll']))
+            for i in range(1500, 988, -5):
+                CMDS['throttle'] = i
+                print('throttle down:{}'.format(CMDS['throttle']))
                 board.send_RAW_RC([CMDS[ki] for ki in CMDS_ORDER])
-                time.sleep(0.1)
+                time.sleep(0.05)
 
-            for i in range(1800, 1500, -5):
-                CMDS['roll'] = i
-                print('rolling:{}'.format(CMDS['roll']))
-                board.send_RAW_RC([CMDS[ki] for ki in CMDS_ORDER])
-                time.sleep(0.1)
+            # # test roll
+            # CMDS['roll'] = 1500
+            # for i in range(1500, 1800, 5):
+            #     CMDS['roll'] = i
+            #     print('rolling:{}'.format(CMDS['roll']))
+            #     board.send_RAW_RC([CMDS[ki] for ki in CMDS_ORDER])
+            #     time.sleep(0.1)
 
-            # test pitch
-            CMDS['pitch'] = 1500
-            for i in range(1500, 1800, 5):
-                CMDS['pitch'] = i
-                print('pitching:{}'.format(CMDS['pitch']))
-                board.send_RAW_RC([CMDS[ki] for ki in CMDS_ORDER])
-                time.sleep(0.1)
+            # for i in range(1800, 1500, -5):
+            #     CMDS['roll'] = i
+            #     print('rolling:{}'.format(CMDS['roll']))
+            #     board.send_RAW_RC([CMDS[ki] for ki in CMDS_ORDER])
+            #     time.sleep(0.1)
 
-            for i in range(1800, 1500, -5):
-                CMDS['pitch'] = i
-                print('pitching:{}'.format(CMDS['pitch']))
-                board.send_RAW_RC([CMDS[ki] for ki in CMDS_ORDER])
-                time.sleep(0.1)
+            # # test pitch
+            # CMDS['pitch'] = 1500
+            # for i in range(1500, 1800, 5):
+            #     CMDS['pitch'] = i
+            #     print('pitching:{}'.format(CMDS['pitch']))
+            #     board.send_RAW_RC([CMDS[ki] for ki in CMDS_ORDER])
+            #     time.sleep(0.1)
+
+            # for i in range(1800, 1500, -5):
+            #     CMDS['pitch'] = i
+            #     print('pitching:{}'.format(CMDS['pitch']))
+            #     board.send_RAW_RC([CMDS[ki] for ki in CMDS_ORDER])
+            #     time.sleep(0.1)
 
             # # Send the RC channel values to the FC
             # if board.send_RAW_RC([CMDS[ki] for ki in CMDS_ORDER]):
             #     dataHandler = board.receive_msg()
             #     board.process_recv_data(dataHandler)
 
+            print('Sending Disarm command...')
+            CMDS['aux1'] = 1000
+            board.send_RAW_RC([CMDS[ki] for ki in CMDS_ORDER])
+            time.sleep(2)
+
     finally:
-        print('Sending Disarm command...')
-        CMDS['aux1'] = 1000
-        board.send_RAW_RC([CMDS[ki] for ki in CMDS_ORDER])
         time.sleep(2)
         print("test over!")
 

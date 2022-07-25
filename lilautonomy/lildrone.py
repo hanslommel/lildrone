@@ -4,16 +4,14 @@ import logging
 import threading
 import time as timelib
 
-from vpython import *
 from multiwii import MultiWiiInterface 
-from lilsim import LilSim
 from SE import StateEstimator
 from mapping import Mapping
 from planning import Planning
 from shared_buffer import SharedBuffer
 
 # some settings
-simulation = True
+simulation = False
 main_loop_dt = 1
 
 # create the shared buffer
@@ -21,6 +19,8 @@ sb = SharedBuffer()
 
 # some setup
 if simulation:
+    from lilsim import LilSim
+    from vpython import *
     FCInterface = LilSim(sb, headless=True)
 else:
     FCInterface = MultiWiiInterface(sb)
@@ -59,11 +59,20 @@ while time < start_time + 10:
 
     time = time + main_loop_dt
 
+print("stopping FC Interface...")
 FCInterface.stop()
 FCInterfaceThread.join()
+
+print("stopping SE...")
 SE.stop()
 SEThread.join()
+
+print("stopping map...")
 Map.stop()
 MapThread.join()
+
+print("stopping planner...")
 Planner.stop()
 PlannerThread.join()
+
+print("done!")

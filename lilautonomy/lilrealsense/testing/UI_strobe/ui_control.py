@@ -6,7 +6,7 @@ from itertools import cycle
 
 import multiprocessing
 from queue import Empty
-import ui_realsense_control
+import lilrealsense.testing.UI_strobe.realsense_depth as realsense_depth
 from yamspy import MSPy
 
 # Max periods for:
@@ -18,7 +18,10 @@ NO_OF_CYCLES_AVERAGE_GUI_TIME = 10
 SERIAL_PORT = "/dev/ttyAMA1"
 
 def realsense(out_q):
-    ui_realsense_control.main(out_q, testing=False)
+    realsense_depth.main(out_q, testing=False)
+
+def ir_stream(out_q):
+    ir.main(out_q, testing=False)
 
 def stop(pool):
     pool.terminate()
@@ -97,6 +100,7 @@ def keyboard_controller(screen):
         q2 = manager.Queue()
         pool = multiprocessing.Pool()
         t1 = pool.apply_async(realsense, [q])
+        t2 = pool.apply_async(ir_stream, [q2])
         time.sleep(5)
 
     except KeyboardInterrupt:

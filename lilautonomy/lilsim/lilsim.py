@@ -71,35 +71,36 @@ class LilSim(FCInterfaceBase):
         
         # set up visualization model
         # IMPORTANT: this doesn't work in a thread! gotta move it to main thread, and get published imu values
-        ptr = box(up=vector(0,1,0), color=color.blue, length=3, height=0.4, width=3)
+        # ptr = box(up=vector(0,1,0), color=color.blue, length=3, height=0.4, width=3)
 
-        try:
+        # try:
     #        entry = imu_log.readline()
     #        entry_list = [i for i in re.findall(r'[-+]?\d+(?:\.\d+)?', entry) if i]
 
     #        print(f'x: {entry_list[0]} y: {entry_list[1]} z: {entry_list[2]}')
 
             # pete help me with maths plz i don't know how :(
-            entry_list = [0, 0, 0, 0, 0, 0]
-            x_ang = int(entry_list[3])# - x_val
-            y_ang = int(entry_list[4])# - y_val
-            z_ang = int(entry_list[5])# - z_val
+            # entry_list = [0, 0, 0, 0, 0, 0]
+            # x_ang = int(entry_list[3])# - x_val
+            # y_ang = int(entry_list[4])# - y_val
+            # z_ang = int(entry_list[5])# - z_val
 
             # x_ang, y_ang, z_ang = self._quadrotor.get_rpy()
 
-            ptr.rotate(angle=(x_ang / 1800), axis=vector(0,0,1))
-            ptr.rotate(angle=(y_ang / 1800), axis=vector(1,0,0))
-            ptr.rotate(angle=(z_ang / 1800), axis=vector(0,1,0))
+            # ptr.rotate(angle=(x_ang / 1800), axis=vector(0,0,1))
+            # ptr.rotate(angle=(y_ang / 1800), axis=vector(1,0,0))
+            # ptr.rotate(angle=(z_ang / 1800), axis=vector(0,1,0))
 
             #x_val = x_ang
             #y_val = y_ang
             #z_val = z_ang
             #timelib.sleep(0.009)
 
-        except IndexError as err:
-            print(err)
-            print('end of file?')
-            os.kill(os.getpid(), signal.SIGINT)
+        # except IndexError as err:
+        #     print(err)
+        #     print('end of file?')
+        #     os.kill(os.getpid(), signal.SIGINT)
+        pass
 
 
     def loop(self):
@@ -119,9 +120,7 @@ class LilSim(FCInterfaceBase):
                     if self._loop_last > (self._get_last + self._get_dt):
                         self._get_last = self._loop_last
                         self.get()
-                    
 
-                    
                     if timelib.time() < (self._loop_last + self._loop_dt):
                         timelib.sleep(self._loop_last + self._loop_dt - timelib.time())
                     else:

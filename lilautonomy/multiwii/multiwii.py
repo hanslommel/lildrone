@@ -72,16 +72,24 @@ class MultiWiiInterface(FCInterfaceBase):
         super(MultiWiiInterface, self).__init__(sb)
 
     def get(self):
-        with self.board:
-            self.board.fast_read_imu()
+        with self.board as board:
+            board.fast_read_imu()
 
-            accelerometer = self.board.SENSOR_DATA['accelerometer']
-            gyroscope = self.board.SENSOR_DATA['gyroscope']
+            ARMED = board.bit_check(board.CONFIG['mode'],0)
+            print("ARMED: {}".format(ARMED))
+            print("armingDisableFlags: {}".format(board.process_armingDisableFlags(board.CONFIG['armingDisableFlags'])))
+            print("cpuload: {}".format(board.CONFIG['cpuload']))
+            print("cycleTime: {}".format(board.CONFIG['cycleTime']))
+            print("mode: {}".format(board.CONFIG['mode']))
+            print("Flight Mode: {}".format(board.process_mode(board.CONFIG['mode'])))
+
+            accelerometer = board.SENSOR_DATA['accelerometer']
+            gyroscope = board.SENSOR_DATA['gyroscope']
 
             print(accelerometer)
             print(gyroscope)
 
-    def set(self):
+    def set(self, armed):
         print('MultiWiiInterface.set placeholder')
         # TODO copy this from lilsim, try it on real quad
         CMDS = {
@@ -95,26 +103,25 @@ class MultiWiiInterface(FCInterfaceBase):
         CMDS_ORDER = ['roll', 'pitch', 'throttle', 'yaw', 'aux1', 'aux2']
 
         with self.board as board:
+
             # disarm
-            CMDS['aux1'] = 1000
-            board.send_RAW_RC([CMDS[ki] for ki in CMDS_ORDER])
+            if armed:
+                CMDS['aux1'] = 1800
+            else:
+                CMDS['aux1'] = 1000
 
             # set throttle
             CMDS['throttle'] = 988
 
-            # arm
-            CMDS['aux1'] = 1800
-            board.send_RAW_RC([CMDS[ki] for ki in CMDS_ORDER])
+
 
             # mode
             CMDS['aux2'] <= 1300 # Horizon mode
             1700 > CMDS['aux2'] > 1300 # Flip Mode
             CMDS['aux2'] >= 1700 # Angle Mode
-            board.send_RAW_RC([CMDS[ki] for ki in CMDS_ORDER])
 
             # roll
             CMDS['roll'] = 1500
-            board.send_RAW_RC([CMDS[ki] for ki in CMDS_ORDER])
 
             # pitch
             CMDS['pitch'] = 1500
@@ -136,7 +143,7 @@ class MultiWiiInterface(FCInterfaceBase):
                     
                     if self._loop_last > (self._set_last + self._set_dt):
                         self._set_last = self._loop_last
-                        self.set()
+                        self.set(armed=False)
                     
                     if timelib.time() < (self._loop_last + self._loop_dt):
                         timelib.sleep(self._loop_last + self._loop_dt - timelib.time())
