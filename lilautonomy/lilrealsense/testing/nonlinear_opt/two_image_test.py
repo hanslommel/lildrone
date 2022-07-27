@@ -177,7 +177,7 @@ try:
                 print(p0_depth[i]) 
                 print(p0_depth[i+1])
                 print(p0_depth[i+2])
-                #ax.scatter(p0_depth[i][0], p0_depth[i][1], p0_depth[i][2])
+                #ax.scatter(p0_depth[i], p0_depth[i], p0_depth[i])
                 #plt.show()
 
         last_image = ir_np

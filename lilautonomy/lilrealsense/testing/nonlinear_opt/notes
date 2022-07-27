@@ -1,3 +1,32 @@
+Next:
+GTSAM python library
+put 3d points in
+put in poses
+factors to constrain them
+it will nonlinearly solve!
+particularly optimized because it likes sparsity
+
+functions we need
+add states (3d points and poses)
+add factor (this point from this pose at this pixel)
+SOLVE!
+
+factors:
+point from altitude
+intertials gyro and accel
+optical flow downward - low bar outlier rejection
+
+
+eventually:
+convert depth to mesh
+anchor to points 
+meshslams
+
+
+project goals:
+detect people, disaster relief?
+
+
 - Dense geometric image alignment:
   (P) min_{T_21} E[D(2), T_21*D(1)]
   - D(i) = ith depth image
