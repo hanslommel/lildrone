@@ -32,3 +32,6 @@ to build firmware from the inav folder:
 
 Custom firmware will be tagged as 5.0.0 so we'll need the dev configurator:
 http://seyrsnys.myzen.co.uk/inav-configurator-next/
+
+Building pyrealsense2:
+https://github.com/IntelRealSense/librealsense/blob/master/doc/installation_raspbian.md
