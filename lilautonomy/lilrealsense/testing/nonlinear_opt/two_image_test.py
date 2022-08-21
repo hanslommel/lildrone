@@ -34,19 +34,30 @@ def optical_flow(new_image, old_image, depth, p0):
 
     frame = np.array([])
     # params for ShiTomasi corner detection
-    feature_params = dict(maxCorners = 20,
-                        qualityLevel = 0.1,
-                        minDistance = 200,
-                        blockSize = 70)
+    feature_params = dict(maxCorners = 30,
+                        qualityLevel = 0.2,
+                        minDistance = 30,
+                        blockSize = 7)
     # Parameters for lucas kanade optical flow
-    lk_params = dict(winSize = (15, 15),
-                    maxLevel = 2,
-                    criteria = (cv2.TERM_CRITERIA_EPS | cv2.TERM_CRITERIA_COUNT, 10, 0.03))
+    lk_params = dict(winSize = (20, 20),
+                    maxLevel = 3,
+                    criteria = (cv2.TERM_CRITERIA_EPS | cv2.TERM_CRITERIA_COUNT, 10, 0.03),)
 
     # old_image = cv2.cvtColor(old_image, cv2.COLOR_BGR2GRAY)
     # new_image = cv2.cvtColor(new_image, cv2.COLOR_BGR2GRAY)
 
-    p0 = cv2.goodFeaturesToTrack(old_image, mask=None, **feature_params)
+    # ones_like!
+    mask = 255*np.ones_like(old_image)
+
+    if len(p0) <= 10:
+        for point in p0:
+            mask = cv2.circle(mask, (int(point[0][0]), int(point[0][1])), 5, 0, -1)
+        cv2.imshow("jimmy", mask)
+        new_features = cv2.goodFeaturesToTrack(old_image, mask=mask, **feature_params)
+        if len(p0) == 0:
+            p0 = new_features
+        else:
+            p0 = np.concatenate((p0, new_features), axis=0)
 
     p1, st, err = cv2.calcOpticalFlowPyrLK(old_image, new_image, p0, None, **lk_params)
 
@@ -55,17 +66,25 @@ def optical_flow(new_image, old_image, depth, p0):
         good_old = p0[st==1]
 
     mask = np.zeros_like(old_image)
-    color = np.random.randint(0, 255, (100, 3))
+    color = np.random.randint(254, 255, (100, 3))
 
     p0_depth = np.array([])
 
     for i, (new, old) in enumerate(zip(good_new, good_old)):
         # end coordinates x, y, z
         a, b = new.ravel()
-        e = depth[int(b), int(a)]
+        if a < 640 and b < 480:
+            e = 10*round(0.1*depth[int(b - 1), int(a - 1)])
+        else:
+            e = 0
+            print("wtf")
         # start coordinates x, y
         c, d = old.ravel()
-        f = depth[int(d), int(c)]
+        if c < 640 and d < 480:
+            f = 10*round(0.1*depth[int(d - 1), int(c - 1)])
+        else:
+            f = 0
+            print("wtf")
 
         p0_depth = np.append(p0_depth, (a, b, e))
 
@@ -83,9 +102,9 @@ def optical_flow(new_image, old_image, depth, p0):
         thickness = 1
         lineType = 2
 
-        cv2.putText(frame, str(e), 
-            coordText, 
-            font, 
+        cv2.putText(frame, str(e),
+            coordText,
+            font,
             fontScale,
             fontColor,
             thickness,
@@ -135,6 +154,7 @@ counter = 0
 # plotting
 fig = plt.figure(figsize=(4,4))
 ax = fig.add_subplot(111, projection='3d')
+p0 = []
 
 try:
     while True:
@@ -162,21 +182,19 @@ try:
             ir1_frame = frames.get_infrared_frame(1) # Left IR Camera, it allows 1, 2 or no input
             ir_np = np.asanyarray(ir1_frame.get_data())
 
-        p0 = []
-
         if np.any(last_image) and np.any(scaled_depth):
             #res_lsq = least_squares(fun, [0,0], args=(t_train, y_train))
             print("solving!")
             #res_lsq = optimize.least_squares(some_function, [0,0], args=(last_image, scaled_depth))
             #print(res_lsq.x)
-            opt_flow_p0, dim1, dim2, dim3, p0_depth = optical_flow(last_image, ir_np, scaled_depth, p0)
+            p0, dim1, dim2, dim3, p0_depth = optical_flow(ir_np, last_image, scaled_depth, p0)
             print("opt_flow: ", dim1, dim2, dim3)
 
             # plotting
-            for i in range(len(p0_depth)):
-                print(p0_depth[i]) 
-                print(p0_depth[i+1])
-                print(p0_depth[i+2])
+            #for i in range(len(p0_depth)):
+                #print(p0_depth[i]) 
+                #print(p0_depth[i+1])
+                #print(p0_depth[i+2])
                 #ax.scatter(p0_depth[i], p0_depth[i], p0_depth[i])
                 #plt.show()
 
