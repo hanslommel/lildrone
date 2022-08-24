@@ -1,14 +1,29 @@
+import argparse
 import numpy as np
 import cv2
 from scipy import optimize
-import pyrealsense2.pyrealsense2 as rs
+#import pyrealsense2.pyrealsense2 as rs
 import scipy.interpolate
 import time
+
+# image playback
+from PIL import Image
+import glob
 
 # plotting
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 
+
+parser = argparse.ArgumentParser()
+parser.add_argument("--playback_images",
+                    action='store_true',
+                    help="plays back depth and IR images from file")
+args = parser.parse_args()
+
+# don't import pyrealsense2 if playing back locally
+if not args.playback_images:
+    import pyrealsense2.pyrealsense2 as rs
 
 def bilinear_interpolate_scipy(image, x, y):
     y_indices = np.arange(image.shape[0])
@@ -122,25 +137,26 @@ def optical_flow(new_image, old_image, depth, p0):
 
     return p0, dim1, dim2, dim3, p0_depth
 
-pipeline = rs.pipeline()
+# start streaming
+if not args.playback_images:
+    pipeline = rs.pipeline()
+    config = rs.config()
 
-config = rs.config()
+    #config.enable_stream(rs.stream.depth, 256, 144, rs.format.z16, 300)
 
-#config.enable_stream(rs.stream.depth, 256, 144, rs.format.z16, 300)
+    # working:
+    config.enable_stream(rs.stream.depth, 640, 480, rs.format.z16, 30)
 
-# working:
-config.enable_stream(rs.stream.depth, 640, 480, rs.format.z16, 30)
+    # not working
+    #config.enable_stream(rs.stream.depth, 0, 848, 100, rs.format.z16, 300)
+    config.enable_stream(rs.stream.infrared, 1, 640, 480, rs.format.y8, 30)
 
-# not working
-#config.enable_stream(rs.stream.depth, 0, 848, 100, rs.format.z16, 300)
-config.enable_stream(rs.stream.infrared, 1, 640, 480, rs.format.y8, 30)
+    pipeline_profile = pipeline.start(config)
+    device = pipeline_profile.get_device()
 
-pipeline_profile = pipeline.start(config)
-device = pipeline_profile.get_device()
-
-depth_sensor = device.query_sensors()[0]
-depth_sensor.set_option(rs.option.emitter_on_off, 1)
-#depth_sensor.set_option(rs.option.emitter_enabled, 0)
+    depth_sensor = device.query_sensors()[0]
+    depth_sensor.set_option(rs.option.emitter_on_off, 1)
+    #depth_sensor.set_option(rs.option.emitter_enabled, 0)
 
 last_image = np.array([])
 ir_np = np.array([])
@@ -149,44 +165,73 @@ scaled_depth = np.array([])
 start_time = time.time()
 x = 1 # displays the frame rate every 1 second
 counter = 0
-
+fps_counter = 0
+p0 = []
 
 # plotting
-fig = plt.figure(figsize=(4,4))
-ax = fig.add_subplot(111, projection='3d')
-p0 = []
+# fig = plt.figure(figsize=(4,4))
+# ax = fig.add_subplot(111, projection='3d')
+
+# set up image reading from folder
+if args.playback_images:
+    print("image playback selected, creating image lists...")
+    ir_image_list = []
+    depth_image_list = []
+    for filename in sorted(glob.glob('dataset/realsense/color/*.jpg')):
+        print("appending image to list: ", filename)
+        with Image.open(filename) as im:
+            im = np.asanyarray(im)
+            ir_image_list.append(im)
+            print(type(im))
+    for filename in sorted(glob.glob('dataset/realsense/depth/*.png')):
+        with Image.open(filename) as im:
+            im = np.asanyarray(im)
+            depth_image_list.append(im)
 
 try:
     while True:
-        frames = pipeline.wait_for_frames()
-        depth_frame = frames.get_depth_frame()
-        ir_frame = frames.get_infrared_frame(1)
+        if not args.playback_images:
+            frames = pipeline.wait_for_frames()
+            depth_frame = frames.get_depth_frame()
+            ir_frame = frames.get_infrared_frame(1)
 
-        frame_number = frames.get_frame_number()
-        print("frame: ", frame_number)
+            frame_number = frames.get_frame_number()
+            print("frame: ", frame_number)
 
-        emitter = rs.depth_frame.get_frame_metadata(depth_frame, rs.frame_metadata_value.frame_laser_power_mode)
+            emitter = rs.depth_frame.get_frame_metadata(depth_frame, rs.frame_metadata_value.frame_laser_power_mode)
 
-        if emitter:
-            depth = frames.get_depth_frame()
-            if not depth:
-                continue
+            if emitter:
+                depth = frames.get_depth_frame()
+                if not depth:
+                    continue
 
-            depth_image = np.asanyarray(depth.get_data())
-            scaled_depth = cv2.convertScaleAbs(depth_image, alpha=0.08)
+                depth_image = np.asanyarray(depth.get_data())
+                scaled_depth = cv2.convertScaleAbs(depth_image, alpha=0.08)
 
-            depth_colormap = cv2.applyColorMap(scaled_depth, cv2.COLORMAP_JET)
-            cv2.imshow('RealSense', depth_colormap)
+                depth_colormap = cv2.applyColorMap(scaled_depth, cv2.COLORMAP_JET)
+                cv2.imshow('RealSense', depth_colormap)
 
+            else:
+                ir1_frame = frames.get_infrared_frame(1) # Left IR Camera, it allows 1, 2 or no input
+                ir_np = np.asanyarray(ir1_frame.get_data())
         else:
-            ir1_frame = frames.get_infrared_frame(1) # Left IR Camera, it allows 1, 2 or no input
-            ir_np = np.asanyarray(ir1_frame.get_data())
+            try:
+                ir_np = ir_image_list[counter]
+                ir_np = np.asanyarray(ir_np)
+                print("showing image #: ", counter)
+                scaled_depth = depth_image_list[counter]
+                scaled_depth = np.asanyarray(scaled_depth)
+            except IndexError as err:
+                # loop through images when we get to the end
+                counter = 0
+                continue
 
         if np.any(last_image) and np.any(scaled_depth):
             #res_lsq = least_squares(fun, [0,0], args=(t_train, y_train))
-            print("solving!")
             #res_lsq = optimize.least_squares(some_function, [0,0], args=(last_image, scaled_depth))
             #print(res_lsq.x)
+            last_image = np.asanyarray(last_image)
+            scaled_depth = np.asanyarray(scaled_depth)
             p0, dim1, dim2, dim3, p0_depth = optical_flow(ir_np, last_image, scaled_depth, p0)
             print("opt_flow: ", dim1, dim2, dim3)
 
@@ -204,9 +249,11 @@ try:
         #cv2.imshow('RealSense', depth_colormap)
 
         counter+=1
+
+        fps_counter+=1
         if (time.time() - start_time) > x :
-            print("FPS: ", counter / (time.time() - start_time))
-            counter = 0
+            print("FPS: ", fps_counter / (time.time() - start_time))
+            fps_counter = 0
             start_time = time.time()
 
         key = cv2.waitKey(1)
@@ -218,4 +265,5 @@ try:
 
 
 finally:
-    pipeline.stop()
+    if not args.playback_images:
+        pipeline.stop()
