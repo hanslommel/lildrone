@@ -19,6 +19,9 @@ parser = argparse.ArgumentParser()
 parser.add_argument("--playback_images",
                     action='store_true',
                     help="plays back depth and IR images from file")
+parser.add_argument("--image_location",
+                    action='store',
+                    help='file to play images from, default is dataset/realsense')
 args = parser.parse_args()
 
 # don't import pyrealsense2 if playing back locally
@@ -49,14 +52,15 @@ def optical_flow(new_image, old_image, depth, p0):
 
     frame = np.array([])
     # params for ShiTomasi corner detection
-    feature_params = dict(maxCorners = 30,
-                        qualityLevel = 0.2,
-                        minDistance = 30,
-                        blockSize = 7)
+    #TODO: need to get this dialed in before trying to track
+    feature_params = dict(maxCorners = 40,
+                        qualityLevel = 0.5,
+                        minDistance = 70,
+                        blockSize = 3)
     # Parameters for lucas kanade optical flow
-    lk_params = dict(winSize = (20, 20),
+    lk_params = dict(winSize = (25, 25),
                     maxLevel = 3,
-                    criteria = (cv2.TERM_CRITERIA_EPS | cv2.TERM_CRITERIA_COUNT, 10, 0.03),)
+                    criteria = (cv2.TERM_CRITERIA_EPS | cv2.TERM_CRITERIA_COUNT, 10, 0.3),)
 
     # old_image = cv2.cvtColor(old_image, cv2.COLOR_BGR2GRAY)
     # new_image = cv2.cvtColor(new_image, cv2.COLOR_BGR2GRAY)
@@ -75,6 +79,8 @@ def optical_flow(new_image, old_image, depth, p0):
             p0 = np.concatenate((p0, new_features), axis=0)
 
     p1, st, err = cv2.calcOpticalFlowPyrLK(old_image, new_image, p0, None, **lk_params)
+    # where None is we can put in next pts, get possible positions of new point from imu
+    # use imu, do maths on tracked points vs imu accel, next pts will know where to look
 
     if p1 is not None:
         good_new = p1[st==1]
@@ -177,13 +183,18 @@ if args.playback_images:
     print("image playback selected, creating image lists...")
     ir_image_list = []
     depth_image_list = []
-    for filename in sorted(glob.glob('dataset/realsense/color/*.jpg')):
+    if not args.image_location:
+        folder = 'dataset/realsense/'
+    else:
+        folder = args.image_location
+        print(folder + 'color/*.jpg')
+    for filename in sorted(glob.glob(folder + 'color/*.jpg')):
         print("appending image to list: ", filename)
         with Image.open(filename) as im:
             im = np.asanyarray(im)
             ir_image_list.append(im)
             print(type(im))
-    for filename in sorted(glob.glob('dataset/realsense/depth/*.png')):
+    for filename in sorted(glob.glob(folder + 'depth/*.png')):
         with Image.open(filename) as im:
             im = np.asanyarray(im)
             depth_image_list.append(im)
