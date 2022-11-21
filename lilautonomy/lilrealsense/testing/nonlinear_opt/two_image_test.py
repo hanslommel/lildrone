@@ -11,8 +11,8 @@ from PIL import Image
 import glob
 
 # plotting
-import matplotlib.pyplot as plt
-from mpl_toolkits.mplot3d import Axes3D
+#import matplotlib.pyplot as plt
+#from mpl_toolkits.mplot3d import Axes3D
 
 
 parser = argparse.ArgumentParser()
@@ -53,13 +53,13 @@ def optical_flow(new_image, old_image, depth, p0):
     frame = np.array([])
     # params for ShiTomasi corner detection
     #TODO: need to get this dialed in before trying to track
-    feature_params = dict(maxCorners = 40,
+    feature_params = dict(maxCorners = 60,
                         qualityLevel = 0.5,
-                        minDistance = 70,
-                        blockSize = 3)
+                        minDistance = 40,
+                        blockSize = 7)
     # Parameters for lucas kanade optical flow
-    lk_params = dict(winSize = (25, 25),
-                    maxLevel = 3,
+    lk_params = dict(winSize = (5, 5),
+                    maxLevel = 5,
                     criteria = (cv2.TERM_CRITERIA_EPS | cv2.TERM_CRITERIA_COUNT, 10, 0.3),)
 
     # old_image = cv2.cvtColor(old_image, cv2.COLOR_BGR2GRAY)
@@ -73,10 +73,22 @@ def optical_flow(new_image, old_image, depth, p0):
             mask = cv2.circle(mask, (int(point[0][0]), int(point[0][1])), 5, 0, -1)
         cv2.imshow("jimmy", mask)
         new_features = cv2.goodFeaturesToTrack(old_image, mask=mask, **feature_params)
+        # func returns nonetype sometimes?? not enough features?
+        # disabling mask stops this, need to fix how we mask points
+        # also hit this if point quality is too high
+        print("new features type: ", type(new_features))
+        print("length of p0: ", len(p0))
+        if type(new_features) == None:
+            print("new features returned nonetype")
+            new_features = p0
         if len(p0) == 0:
             p0 = new_features
         else:
-            p0 = np.concatenate((p0, new_features), axis=0)
+            try:
+                p0 = np.concatenate((p0, new_features), axis=0)
+            except ValueError as err:
+                print(err)
+                p0 = new_features
 
     p1, st, err = cv2.calcOpticalFlowPyrLK(old_image, new_image, p0, None, **lk_params)
     # where None is we can put in next pts, get possible positions of new point from imu
@@ -90,6 +102,7 @@ def optical_flow(new_image, old_image, depth, p0):
     color = np.random.randint(254, 255, (100, 3))
 
     p0_depth = np.array([])
+    pts_diff = np.array([])
 
     for i, (new, old) in enumerate(zip(good_new, good_old)):
         # end coordinates x, y, z
@@ -112,8 +125,9 @@ def optical_flow(new_image, old_image, depth, p0):
         dim1 = (int(a) - int(c))
         dim2 = (int(b) - int(d))
         dim3 = (int(e) - int(f))
+        pts_diff = np.append(pts_diff, (dim1, dim2, dim3))
         mask = cv2.line(mask, (int(a), int(b)), (int(c), int(d)), color[i].tolist(), 2)
-        frame = cv2.circle(old_image, (int(a), int(b)), 5, color[i].tolist(), -1)
+        frame = cv2.circle(old_image, (int(c), int(d)), 5, color[i].tolist(), -1)
 
         # write some depths at each point we're tracking
         font = cv2.FONT_HERSHEY_SIMPLEX
@@ -138,10 +152,44 @@ def optical_flow(new_image, old_image, depth, p0):
     k = cv2.waitKey(30) & 0xff
     if k == 27:
         return
-    # Now update the previous frame and previous points
-    p0 = good_new.reshape(-1, 1, 2)
+    # # Now update the previous frame and previous points
+    # p0 = good_new.reshape(-1, 1, 2)
+    # print("x diff array: ", pts_diff[0])
+    # avg_0 = np.average(pts_diff[0])
+    # avg_1 = np.average(pts_diff[1])
+    # avg_2 = np.average(pts_diff[2])
 
-    return p0, dim1, dim2, dim3, p0_depth
+    # pts_diff_avg = [avg_0, avg_1, avg_2]
+    # print("avg diff xyz: ", pts_diff_avg)
+    try:
+        # Now update the previous frame and previous points
+        p0 = good_new.reshape(-1, 1, 2)
+        print("x diff array: ", pts_diff[0])
+        avg_0 = np.average(pts_diff[0])
+        avg_1 = np.average(pts_diff[1])
+        avg_2 = np.average(pts_diff[2])
+
+        pts_diff_avg = [avg_0, avg_1, avg_2]
+        print("avg diff xyz: ", pts_diff_avg)
+        dims = [dim1, dim2, dim3]
+        #print(dims)
+        return p0, pts_diff_avg, p0_depth
+    except UnboundLocalError as err:
+        dim1 = 0
+        dim2 = 0
+        dim3 = 0
+        dims = [dim1, dim2, dim3]
+        pts_diff_avg = dims
+        print("no dims found, setting to zero: ", dims)
+        return p0, pts_diff_avg, p0_depth
+    except IndexError as err:
+        dim1 = 0
+        dim2 = 0
+        dim3 = 0
+        dims = [dim1, dim2, dim3]
+        pts_diff_avg = dims
+        print("pts_diff empty! setting to zero: ", dims)
+        return p0, pts_diff_avg, p0_depth
 
 # start streaming
 if not args.playback_images:
@@ -199,6 +247,10 @@ if args.playback_images:
             im = np.asanyarray(im)
             depth_image_list.append(im)
 
+h_x = 0
+h_y = 0
+h_z = 0
+
 try:
     while True:
         if not args.playback_images:
@@ -221,15 +273,16 @@ try:
 
                 depth_colormap = cv2.applyColorMap(scaled_depth, cv2.COLORMAP_JET)
                 cv2.imshow('RealSense', depth_colormap)
+                continue
 
             else:
-                ir1_frame = frames.get_infrared_frame(1) # Left IR Camera, it allows 1, 2 or no input
-                ir_np = np.asanyarray(ir1_frame.get_data())
+                #ir1_frame = frames.get_infrared_frame(1) # Left IR Camera, it allows 1, 2 or no input
+                ir_np = np.asanyarray(ir_frame.get_data())
         else:
             try:
                 ir_np = ir_image_list[counter]
                 ir_np = np.asanyarray(ir_np)
-                print("showing image #: ", counter)
+                #print("showing image #: ", counter)
                 scaled_depth = depth_image_list[counter]
                 scaled_depth = np.asanyarray(scaled_depth)
             except IndexError as err:
@@ -243,8 +296,26 @@ try:
             #print(res_lsq.x)
             last_image = np.asanyarray(last_image)
             scaled_depth = np.asanyarray(scaled_depth)
-            p0, dim1, dim2, dim3, p0_depth = optical_flow(ir_np, last_image, scaled_depth, p0)
-            print("opt_flow: ", dim1, dim2, dim3)
+            p0, pts_diff_avg, p0_depth = optical_flow(ir_np, last_image, scaled_depth, p0)
+            print("opt_flow: ", pts_diff_avg)
+            # add flow dims to show heading
+            h_x = (h_x + pts_diff_avg[0])
+            h_y = (h_y + pts_diff_avg[1])
+            h_z = (h_z + pts_diff_avg[2])
+            headings = [h_x, h_y, h_z]
+
+            #for heading in headings:
+               # h_index = index(heading)
+               # if heading > 360:
+                  #  print("heading circled around, resetting to zero: ", heading)
+                 #   heading = 0
+                #    print("new headings: ", headings)
+               # elif heading < 0:
+                 #   heading = (360 + heading)
+                #    print("les than 0, new headings: ", headings)
+               # headings[h_index] = heading
+
+            print("headings xyz: ", headings)
 
             # plotting
             #for i in range(len(p0_depth)):
