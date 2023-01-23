@@ -16,10 +16,12 @@ class MappingBase:
         self._sb = sb.getInstance()
 
     def update(self):
-        print('MappingBase.update()')
+        #print('MappingBase.update()')
+        pass
 
     def loop(self):
-        print('MappingBase.loop()')
+        #print('MappingBase.loop()')
+        pass
     
     def start(self):
         with self._lock:

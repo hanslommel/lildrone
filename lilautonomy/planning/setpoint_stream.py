@@ -6,7 +6,7 @@ class SetpointMessage(MessageBase):
     """
 
     def __init__(self, tov, roll, pitch, yaw, thrust):
-        print('SetpointMessage')
+        #print('SetpointMessage')
         self._roll = roll
         self._pitch = pitch
         self._yaw = yaw

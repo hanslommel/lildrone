@@ -5,8 +5,8 @@ import time as timelib
 class StateEstimatorBase:
     _lock = threading.Lock()
     _running = False
-    _loop_dt = 0.1 #0.005
-    _propagate_dt = 1 #0.01
+    _loop_dt = 0.01 #0.005
+    _propagate_dt = 0.1 #0.01
     _update_dt = 3 #0.1
     _loop_last = timelib.time()
     _propagate_last = _loop_last
@@ -21,13 +21,16 @@ class StateEstimatorBase:
         self._last_imu = timelib.time()
 
     def propagate(self):
-        print('StateEstimatorBase.propagate()')
+        #print('StateEstimatorBase.propagate()')
+        pass
     
     def update(self):
-        print('StateEstimatorBase.update()')
+        #print('StateEstimatorBase.update()')
+        pass
 
     def loop(self):
-        print('StateEstimatorBase.loop()')
+        #print('StateEstimatorBase.loop()')
+        pass
     
     def start(self):
         with self._lock:
@@ -45,7 +48,7 @@ class StateEstimator(StateEstimatorBase):
         super(StateEstimator, self).__init__(sb)
     
     def propagate(self):
-        print('StateEstimator.propagate()')
+        #print('StateEstimator.propagate()')
         # if we haven't already, connect to IMU stream
         if self._imu_stream is None:
             print('Connecting to IMU stream')

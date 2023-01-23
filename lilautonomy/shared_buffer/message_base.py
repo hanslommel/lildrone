@@ -7,5 +7,5 @@ class MessageBase:
     _tov = None
 
     def __init__(self, tov):
-        print('Init MessageBase')
+        #print('Init MessageBase')
         self._tov = tov

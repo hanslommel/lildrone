@@ -19,7 +19,7 @@ class PlanningBase:
         self._sb.register(self._setpoint_stream, "Setpoint")
     
     def replan(self):
-        print('PlanningBase.update()')
+        #print('PlanningBase.update()')
         pitch = 1500
         roll = 1500
         yaw = 1500
@@ -28,7 +28,8 @@ class PlanningBase:
         self._setpoint_stream.addOne(msg)
 
     def loop(self):
-        print('PlanningBase.loop()')
+        #print('PlanningBase.loop()')
+        pass
     
     def start(self):
         with self._lock:

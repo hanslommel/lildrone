@@ -66,28 +66,41 @@ class MultiWiiInterface(FCInterfaceBase):
     def __init__(self, sb):
         print('MultiWiiInterface init')
         self.board = MSPy(device="/dev/ttyAMA1", loglevel='WARNING', baudrate=115200)
-        self._loop_dt = 0.05 #0.005
-        self._get_dt = 0.1 #0.01
-        self._set_dt = 1 #0.01
+        self.board.connect()
+        self._loop_dt = 0.01 #0.005
+        self._get_dt = 0.01 #0.01
+        self._set_dt = 10 #0.01
         super(MultiWiiInterface, self).__init__(sb)
 
+    def stop(self):
+        with self._lock:
+            print('FCInterface Stop Running')
+            self.board.__exit__(0, 0, 0)
+            self._running = False
+
     def get(self):
-        with self.board as board:
-            board.fast_read_imu()
+        #with self.board as board:
+            #board.fast_read_imu()
+        self.board.fast_read_imu()
+        gyroscope = self.board.SENSOR_DATA['gyroscope']
+        accelerometer = self.board.SENSOR_DATA['accelerometer']
+        msg = IMUMessage(timelib.time(), accelerometer, gyroscope)
+        self._imu_stream.addOne(msg)
 
-            ARMED = board.bit_check(board.CONFIG['mode'],0)
-            print("ARMED: {}".format(ARMED))
-            print("armingDisableFlags: {}".format(board.process_armingDisableFlags(board.CONFIG['armingDisableFlags'])))
-            print("cpuload: {}".format(board.CONFIG['cpuload']))
-            print("cycleTime: {}".format(board.CONFIG['cycleTime']))
-            print("mode: {}".format(board.CONFIG['mode']))
-            print("Flight Mode: {}".format(board.process_mode(board.CONFIG['mode'])))
+        print(f"accelerometer: {accelerometer}   gyroscope: {gyroscope}")
 
-            accelerometer = board.SENSOR_DATA['accelerometer']
-            gyroscope = board.SENSOR_DATA['gyroscope']
+            #ARMED = board.bit_check(board.CONFIG['mode'],0)
+            #print("ARMED: {}".format(ARMED))
+            #print("armingDisableFlags: {}".format(board.process_armingDisableFlags(board.CONFIG['armingDisableFlags'])))
+            #print("cpuload: {}".format(board.CONFIG['cpuload']))
+            #print("cycleTime: {}".format(board.CONFIG['cycleTime']))
+            #print("mode: {}".format(board.CONFIG['mode']))
+            #print("Flight Mode: {}".format(board.process_mode(board.CONFIG['mode'])))
 
-            print(accelerometer)
-            print(gyroscope)
+            #accelerometer = board.SENSOR_DATA['accelerometer']
+            #gyroscope = board.SENSOR_DATA['gyroscope']
+
+            #print(f"accelerometer: {accelerometer}   gyroscope: {gyroscope}")
 
     def set(self, armed):
         print('MultiWiiInterface.set placeholder')
@@ -102,32 +115,32 @@ class MultiWiiInterface(FCInterfaceBase):
                 }
         CMDS_ORDER = ['roll', 'pitch', 'throttle', 'yaw', 'aux1', 'aux2']
 
-        with self.board as board:
+        #with self.board as board:
 
-            # disarm
-            if armed:
-                CMDS['aux1'] = 1800
-            else:
-                CMDS['aux1'] = 1000
+        # disarm
+        if armed:
+            CMDS['aux1'] = 1800
+        else:
+            CMDS['aux1'] = 1000
 
-            # set throttle
-            CMDS['throttle'] = 988
+        # set throttle
+        CMDS['throttle'] = 988
 
 
 
-            # mode
-            CMDS['aux2'] <= 1300 # Horizon mode
-            1700 > CMDS['aux2'] > 1300 # Flip Mode
-            CMDS['aux2'] >= 1700 # Angle Mode
+        # mode
+        CMDS['aux2'] <= 1300 # Horizon mode
+        1700 > CMDS['aux2'] > 1300 # Flip Mode
+        CMDS['aux2'] >= 1700 # Angle Mode
 
-            # roll
-            CMDS['roll'] = 1500
+        # roll
+        CMDS['roll'] = 1500
 
-            # pitch
-            CMDS['pitch'] = 1500
-            board.send_RAW_RC([CMDS[ki] for ki in CMDS_ORDER])
-    
-    
+        # pitch
+        CMDS['pitch'] = 1500
+        self.board.send_RAW_RC([CMDS[ki] for ki in CMDS_ORDER])
+
+
     # def start(self):  -- using base class
     # def stop(self):   -- using base class
     
@@ -145,8 +158,9 @@ class MultiWiiInterface(FCInterfaceBase):
                         self._set_last = self._loop_last
                         self.set(armed=False)
                     
-                    if timelib.time() < (self._loop_last + self._loop_dt):
-                        timelib.sleep(self._loop_last + self._loop_dt - timelib.time())
+                    current_time = timelib.time()
+                    if current_time < (self._loop_last + self._loop_dt):
+                        timelib.sleep(self._loop_last + self._loop_dt - current_time)
                     else:
                         print('MultiWiiInterface loop took too long')
                 else:
