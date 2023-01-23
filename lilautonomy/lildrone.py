@@ -9,6 +9,7 @@ from SE import StateEstimator
 from mapping import Mapping
 from planning import Planning
 from shared_buffer import SharedBuffer
+from lil_rs_tracker import RSTracker
 
 # some settings
 simulation = False
@@ -38,6 +39,11 @@ Map = Mapping(sb)
 MapThread = threading.Thread(target=Map.loop) # could probably move thread into the Mapping class
 Map.start()
 MapThread.start()
+
+RST = RSTracker(sb)
+RSTThread = threading.Thread(target=RST.loop)
+RST.start()
+RSTThread.start()
 
 Planner = Planning(sb)
 PlannerThread = threading.Thread(target=Planner.loop) # could probably move thread into the Planning class
@@ -70,6 +76,10 @@ SEThread.join()
 print("stopping map...")
 Map.stop()
 MapThread.join()
+
+print("stopping RST...")
+RST.stop()
+RSTThread.join()
 
 print("stopping planner...")
 Planner.stop()
