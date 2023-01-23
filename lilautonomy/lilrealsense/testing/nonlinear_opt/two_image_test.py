@@ -108,14 +108,16 @@ def optical_flow(new_image, old_image, depth, p0):
         # end coordinates x, y, z
         a, b = new.ravel()
         if a < 640 and b < 480:
-            e = 10*round(0.1*depth[int(b - 1), int(a - 1)])
+            e = depth[int(b - 1), int(a - 1)]
+            e_disp = 2*round(0.5*e)
         else:
             e = 0
             print("wtf")
         # start coordinates x, y
         c, d = old.ravel()
         if c < 640 and d < 480:
-            f = 10*round(0.1*depth[int(d - 1), int(c - 1)])
+            f = depth[int(d - 1), int(c - 1)]
+            f_disp = 2*round(0.5*f)
         else:
             f = 0
             print("wtf")
@@ -137,7 +139,7 @@ def optical_flow(new_image, old_image, depth, p0):
         thickness = 1
         lineType = 2
 
-        cv2.putText(frame, str(e),
+        cv2.putText(frame, str(e_disp),
             coordText,
             font,
             fontScale,
