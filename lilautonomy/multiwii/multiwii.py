@@ -87,7 +87,7 @@ class MultiWiiInterface(FCInterfaceBase):
         msg = IMUMessage(timelib.time(), accelerometer, gyroscope)
         self._imu_stream.addOne(msg)
 
-        print(f"accelerometer: {accelerometer}   gyroscope: {gyroscope}")
+        #print(f"accelerometer: {accelerometer}   gyroscope: {gyroscope}")
 
             #ARMED = board.bit_check(board.CONFIG['mode'],0)
             #print("ARMED: {}".format(ARMED))
