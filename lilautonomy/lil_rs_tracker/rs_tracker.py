@@ -100,7 +100,7 @@ class RSTracker:
             good_old = p0[st==1]
 
         mask = np.zeros_like(old_image)
-        #color = np.random.randint(254, 255, (100, 3))
+        color = np.random.randint(254, 255, (100, 3))
 
         for i, (new, old) in enumerate(zip(good_new, good_old)):
             # end coordinates x, y, z
@@ -127,28 +127,28 @@ class RSTracker:
             self.pts_diff = np.append(self.pts_diff, (dim1, dim2, dim3))
 
         # uncomment this to show image:
-            #mask = cv2.line(mask, (int(a), int(b)), (int(c), int(d)), color[i].tolist(), 2)
-            #frame = cv2.circle(old_image, (int(c), int(d)), 5, color[i].tolist(), -1)
+            mask = cv2.line(mask, (int(a), int(b)), (int(c), int(d)), color[i].tolist(), 2)
+            frame = cv2.circle(old_image, (int(c), int(d)), 5, color[i].tolist(), -1)
 
             # write some depths at each point we're tracking
-            # font = cv2.FONT_HERSHEY_SIMPLEX
-            # coordText = (int(c), int(d))
-            # fontScale = 0.5
-            # fontColor = (255,255,255)
-            # thickness = 1
-            # lineType = 2
+            font = cv2.FONT_HERSHEY_SIMPLEX
+            coordText = (int(c), int(d))
+            fontScale = 0.5
+            fontColor = (255,255,255)
+            thickness = 1
+            lineType = 2
 
-            # cv2.putText(frame, str(e_disp),
-            #     coordText,
-            #     font,
-            #     fontScale,
-            #     fontColor,
-            #     thickness,
-            #     lineType)
+            cv2.putText(frame, str(e_disp),
+                coordText,
+                font,
+                fontScale,
+                fontColor,
+                thickness,
+                lineType)
 
-        # if frame.any():
-        #     img = cv2.add(frame, mask)
-        #     cv2.imshow('frame', img)
+        if frame.any():
+            img = cv2.add(frame, mask)
+            cv2.imshow('frame', img)
 
         k = cv2.waitKey(30) & 0xff
         if k == 27:
@@ -164,14 +164,14 @@ class RSTracker:
 
             pts_diff_avg = [avg_0, avg_1, avg_2]
             print("avg diff xyz: ", pts_diff_avg)
-            dims = [dim1, dim2, dim3]
-            #print(dims)
             return self.p0, pts_diff_avg, self.p0_depth
+
         except UnboundLocalError as err:
             dims = [0, 0, 0]
             pts_diff_avg = dims
             print("no dims found, setting to zero: ", dims)
             return self.p0, pts_diff_avg, self.p0_depth
+
         except IndexError as err:
             dims = [0, 0, 0]
             pts_diff_avg = dims
@@ -240,6 +240,7 @@ class RSTracker:
                     self.p0,
                     )
 
+                # TODO not printing, make everything self.?
                 print("opt_flow: ", pts_diff_avg)
                 # add flow dims to show heading
                 self.h_x = (self.h_x + pts_diff_avg[0])
@@ -249,7 +250,7 @@ class RSTracker:
 
                 print("headings xyz: ", headings)
 
-            self.last_image = self.ir_np
+            #self.last_image = self.ir_np
 
             #depth_colormap = cv2.applyColorMap(scaled_depth, cv2.COLORMAP_JET)
             #cv2.imshow('RealSense', depth_colormap)
