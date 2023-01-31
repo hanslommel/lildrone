@@ -17,6 +17,8 @@ import time
         # define last_image and ir_np etc. in init, will be used in process image
         # next time... FLY
 
+# TODO put data from here into ring buffer
+
 class RSTracker:
     _lock = threading.Lock()
     _running = False
@@ -66,42 +68,19 @@ class RSTracker:
 
             self._running = True
 
-    def bilinear_interpolate_scipy(self, image, x, y):
-        y_indices = np.arange(image.shape[0])
-        x_indices = np.arange(image.shape[1])
-        interp_func = scipy.interpolate.interp2d(x_indices, y_indices, image, kind='linear')
-        return interp_func(x,y)
-
-    def some_function(self, x, image1, image2):
-        # this is super slow, maybe numpy has a way to do this?
-        # try pyrealsense2.align?
-        E = 0
-        N = 0
-        for iy, ix in np.ndindex(image1.shape):
-            depth2_est = image1[iy, ix]
-            depth2 = self.bilinear_interpolate_scipy(image2, iy + x[0], ix + x[1])
-            E = E + (depth2_est - depth2)**2
-            N = N + 1
-        return E/N # average squared error
-
     def optical_flow(self, new_image, old_image, depth, p0):
-        print("** optical_flow func start **")
         frame = np.array([])
 
         # ones_like!
         mask = 255*np.ones_like(old_image)
 
-        print("length of p0: ", len(p0))
         if len(p0) <= 10:
             for point in p0:
                 mask = cv2.circle(mask, (int(point[0][0]), int(point[0][1])), 5, 0, -1)
             #cv2.imshow("jimmy", mask)
             new_features = cv2.goodFeaturesToTrack(old_image, mask=mask, **self.feature_params)
 
-            print("new features type: ", type(new_features))
-            print("length of p0: ", len(p0))
             if type(new_features) == None:
-                print("new features returned nonetype")
                 new_features = p0
             if len(p0) == 0:
                 p0 = new_features
@@ -113,32 +92,32 @@ class RSTracker:
                     p0 = new_features
 
         p1, st, err = cv2.calcOpticalFlowPyrLK(old_image, new_image, p0, None, **self.lk_params)
+        # where None is we can put in next pts, get possible positions of new point from imu
+        # use imu, do maths on tracked points vs imu accel, next pts will know where to look
 
         if p1 is not None:
             good_new = p1[st==1]
             good_old = p0[st==1]
 
         mask = np.zeros_like(old_image)
-        color = np.random.randint(254, 255, (100, 3))
+        #color = np.random.randint(254, 255, (100, 3))
 
         for i, (new, old) in enumerate(zip(good_new, good_old)):
             # end coordinates x, y, z
             a, b = new.ravel()
-            print(" ~ int a from ravel: ", a)
             if a < 640 and b < 480:
                 e = depth[int(b - 1), int(a - 1)]
                 e_disp = 2*round(0.5*e)
             else:
                 e = 0
-                print("wtf")
             # start coordinates x, y
             c, d = old.ravel()
+
             if c < 640 and d < 480:
                 f = depth[int(d - 1), int(c - 1)]
                 f_disp = 2*round(0.5*f)
             else:
                 f = 0
-                print("wtf")
 
             self.p0_depth = np.append(self.p0_depth, (a, b, e))
 
@@ -147,28 +126,29 @@ class RSTracker:
             dim3 = (int(e) - int(f))
             self.pts_diff = np.append(self.pts_diff, (dim1, dim2, dim3))
 
-            mask = cv2.line(mask, (int(a), int(b)), (int(c), int(d)), color[i].tolist(), 2)
-            frame = cv2.circle(old_image, (int(c), int(d)), 5, color[i].tolist(), -1)
+        # uncomment this to show image:
+            #mask = cv2.line(mask, (int(a), int(b)), (int(c), int(d)), color[i].tolist(), 2)
+            #frame = cv2.circle(old_image, (int(c), int(d)), 5, color[i].tolist(), -1)
 
             # write some depths at each point we're tracking
-            font = cv2.FONT_HERSHEY_SIMPLEX
-            coordText = (int(c), int(d))
-            fontScale = 0.5
-            fontColor = (255,255,255)
-            thickness = 1
-            lineType = 2
+            # font = cv2.FONT_HERSHEY_SIMPLEX
+            # coordText = (int(c), int(d))
+            # fontScale = 0.5
+            # fontColor = (255,255,255)
+            # thickness = 1
+            # lineType = 2
 
-            cv2.putText(frame, str(e_disp),
-                coordText,
-                font,
-                fontScale,
-                fontColor,
-                thickness,
-                lineType)
+            # cv2.putText(frame, str(e_disp),
+            #     coordText,
+            #     font,
+            #     fontScale,
+            #     fontColor,
+            #     thickness,
+            #     lineType)
 
-        if frame.any():
-            img = cv2.add(frame, mask)
-            cv2.imshow('frame', img)
+        # if frame.any():
+        #     img = cv2.add(frame, mask)
+        #     cv2.imshow('frame', img)
 
         k = cv2.waitKey(30) & 0xff
         if k == 27:
@@ -206,9 +186,8 @@ class RSTracker:
 
     def process_image(self):
             #do all the stuff
-            # TODO: not getting emitter off messages, later in loop it just gets even number frames for some reason?
         try:
-            #while True:
+            # get frames from RealSense pipeline
             frames = self.pipeline.wait_for_frames()
             depth_frame = frames.get_depth_frame()
             ir_frame = frames.get_infrared_frame(1)
@@ -216,21 +195,17 @@ class RSTracker:
                 depth_frame,
                 rs.frame_metadata_value.frame_laser_power_mode,
                 )
-            print("emitter: ", emitter)
 
+            # probably got ones with / without emitter all in a row
+            # grab the next ones immediately and sort
+            # depth needs emitter, IR needs no emitter
             frames_2 = self.pipeline.wait_for_frames()
             ir_frame_2 = frames_2.get_infrared_frame(1)
-            emitter_2 = rs.depth_frame.get_frame_metadata(
-                ir_frame_2,
-                rs.frame_metadata_value.frame_laser_power_mode,
-                )
-            print("emitter_2: ", emitter_2)
 
             frame_number = frames.get_frame_number()
             print("frame: ", frame_number)
 
             if emitter:
-                print("emitter on, using depth image")
                 depth = frames.get_depth_frame()
                 if not depth:
                     print("no depth image")
@@ -239,8 +214,8 @@ class RSTracker:
                 # depth_image = np.asanyarray(depth.get_data())
                 # self.scaled_depth = cv2.convertScaleAbs(depth_image, alpha=0.08)
 
-                self.ir_np = np.asanyarray(ir_frame_2.get_data())
                 self.last_image = self.ir_np
+                self.ir_np = np.asanyarray(ir_frame_2.get_data())
 
                 #depth_colormap = cv2.applyColorMap(scaled_depth, cv2.COLORMAP_JET)
                 #print("** displaying Realsense **")
@@ -248,15 +223,14 @@ class RSTracker:
                 # return
 
             else:
+                self.last_image = self.ir_np
                 depth = frames_2.get_depth_frame()
                 self.ir_np = np.asanyarray(ir_frame.get_data())
-                self.last_image = self.ir_np
 
             depth_image = np.asanyarray(depth.get_data())
             self.scaled_depth = cv2.convertScaleAbs(depth_image, alpha=0.08)
 
             if np.any(self.last_image) and np.any(self.scaled_depth):
-                print("** images detected, running optical flow **")
                 self.last_image = np.asanyarray(self.last_image)
                 self.scaled_depth = np.asanyarray(self.scaled_depth)
                 self.p0, pts_diff_avg, self.p0_depth = self.optical_flow(
@@ -280,8 +254,6 @@ class RSTracker:
             #depth_colormap = cv2.applyColorMap(scaled_depth, cv2.COLORMAP_JET)
             #cv2.imshow('RealSense', depth_colormap)
 
-            print("of some kind")
-
         finally:
             if not self._running:
                 self.pipeline.stop()
@@ -296,7 +268,7 @@ class RSTracker:
                     if self._loop_last > (self._image_last + self._image_dt):
                         self._image_last = self._loop_last
                         self.process_image()
-                    
+
                     if timelib.time() < (self._loop_last + self._loop_dt):
                         timelib.sleep(self._loop_last + self._loop_dt - timelib.time())
                     else:
