@@ -6,8 +6,8 @@ import numpy as np
 import cv2
 from scipy import optimize
 import pyrealsense2.pyrealsense2 as rs
-import scipy.interpolate
-import time
+
+from .feature_stream import FeatureMessage, FeatureStream
 
 
 # what you will do:
@@ -27,10 +27,15 @@ class RSTracker:
     _loop_last = timelib.time()
     _image_last = _loop_last
     _sb = None
+    min_tracked_features = 10
 
     def __init__(self, sb):
         print('Initializing RSTracker')
+        self.headless = False
         self._sb = sb.getInstance()
+        self._feature_stream = FeatureStream()
+        self._sb.register(self._feature_stream, "Feature")
+        # look at multiwii.py for example of how to publish IMU to buffer
 
     def start(self):
         with self._lock:
@@ -64,9 +69,14 @@ class RSTracker:
             self.h_y = 0
             self.h_z = 0
             self.p0_depth = np.array([])
+            self.p0_ids = np.array([])
             self.pts_diff = np.array([])
 
             self._running = True
+
+    def point_id(self, p0, p1):
+        # write function to add ids to points
+        pass
 
     def optical_flow(self, new_image, old_image, depth, p0):
         frame = np.array([])
@@ -74,10 +84,10 @@ class RSTracker:
         # ones_like!
         mask = 255*np.ones_like(old_image)
 
-        if len(p0) <= 10:
+        if len(p0) <= self.min_tracked_features:
             for point in p0:
                 mask = cv2.circle(mask, (int(point[0][0]), int(point[0][1])), 5, 0, -1)
-            #cv2.imshow("jimmy", mask)
+
             new_features = cv2.goodFeaturesToTrack(old_image, mask=mask, **self.feature_params)
 
             if type(new_features) == None:
@@ -91,6 +101,9 @@ class RSTracker:
                     print(err)
                     p0 = new_features
 
+            # give each new feature an id
+            # increment ids starting at 0
+
         p1, st, err = cv2.calcOpticalFlowPyrLK(old_image, new_image, p0, None, **self.lk_params)
         # where None is we can put in next pts, get possible positions of new point from imu
         # use imu, do maths on tracked points vs imu accel, next pts will know where to look
@@ -98,6 +111,26 @@ class RSTracker:
         if p1 is not None:
             good_new = p1[st==1]
             good_old = p0[st==1]
+
+            #new_ids = old_ids[st==1]
+
+            # we want a dataframe with points and ids for each point
+            # send that to buffer for SE
+
+            # example: first frame, 13 features. Name them 0-12
+            # return to send to SE: names, and position of each one (x, y, z)
+            # make SE take either (x, y) or (x, y, z), add special value for z if it's not useful
+            # second frame: 13 features to try to track so we don't add more
+            # successfully track 8: [df p1 with a column for ids 0-7]
+            # send to SE on second frame: the ids 0-7 and their tracked positions [p1]
+            # p1 becomes p0
+            # third frame: start with 8 features, have to detect more
+            # detect 7 more, give them ids 13-19, add that to p0. now has 15 features
+            # ids are 0-7 and 13-19
+            # it tracks all but the first two, 0-1
+            # p1 will have 13 features, with ids 2-7, 13-19
+            # send p1 ids and position to SE (can look at imu)
+            # this is missing z! have to add at a later step
 
         mask = np.zeros_like(old_image)
         color = np.random.randint(254, 255, (100, 3))
@@ -126,33 +159,33 @@ class RSTracker:
             dim3 = (int(e) - int(f))
             self.pts_diff = np.append(self.pts_diff, (dim1, dim2, dim3))
 
-        # uncomment this to show image:
-            mask = cv2.line(mask, (int(a), int(b)), (int(c), int(d)), color[i].tolist(), 2)
-            frame = cv2.circle(old_image, (int(c), int(d)), 5, color[i].tolist(), -1)
+            if not self.headless:
+                mask = cv2.line(mask, (int(a), int(b)), (int(c), int(d)), color[i].tolist(), 2)
+                frame = cv2.circle(old_image, (int(c), int(d)), 5, color[i].tolist(), -1)
 
-            # write some depths at each point we're tracking
-            font = cv2.FONT_HERSHEY_SIMPLEX
-            coordText = (int(c), int(d))
-            fontScale = 0.5
-            fontColor = (255,255,255)
-            thickness = 1
-            lineType = 2
+                # write some depths at each point we're tracking
+                font = cv2.FONT_HERSHEY_SIMPLEX
+                coordText = (int(c), int(d))
+                fontScale = 0.5
+                fontColor = (255,255,255)
+                thickness = 1
+                lineType = 2
 
-            cv2.putText(frame, str(e_disp),
-                coordText,
-                font,
-                fontScale,
-                fontColor,
-                thickness,
-                lineType)
+                cv2.putText(frame, str(e_disp),
+                    coordText,
+                    font,
+                    fontScale,
+                    fontColor,
+                    thickness,
+                    lineType)
 
-        if frame.any():
-            img = cv2.add(frame, mask)
-            cv2.imshow('frame', img)
+            if frame.any():
+                img = cv2.add(frame, mask)
+                cv2.imshow('frame', img)
 
-        k = cv2.waitKey(30) & 0xff
-        if k == 27:
-            return
+            k = cv2.waitKey(30) & 0xff
+            if k == 27:
+                return
 
         try:
             # Now update the previous frame and previous points
@@ -185,44 +218,36 @@ class RSTracker:
             self._running = False
 
     def process_image(self):
-            #do all the stuff
         try:
             # get frames from RealSense pipeline
             frames = self.pipeline.wait_for_frames()
-            depth_frame = frames.get_depth_frame()
-            ir_frame = frames.get_infrared_frame(1)
             emitter = rs.depth_frame.get_frame_metadata(
-                depth_frame,
+                frames,
                 rs.frame_metadata_value.frame_laser_power_mode,
                 )
 
-            # probably got ones with / without emitter all in a row
             # grab the next ones immediately and sort
             # depth needs emitter, IR needs no emitter
             frames_2 = self.pipeline.wait_for_frames()
-            ir_frame_2 = frames_2.get_infrared_frame(1)
+            #ir_frame_2 = frames_2.get_infrared_frame(1)
 
-            frame_number = frames.get_frame_number()
-            print("frame: ", frame_number)
+            if not self.headless:
+                frame_number = frames.get_frame_number()
+                print("frame: ", frame_number, "emitter: ", emitter)
+                frame_number_2 = frames_2.get_frame_number()
+                print("** IR frame: ", frame_number_2)
 
             if emitter:
                 depth = frames.get_depth_frame()
                 if not depth:
-                    print("no depth image")
                     return
 
-                # depth_image = np.asanyarray(depth.get_data())
-                # self.scaled_depth = cv2.convertScaleAbs(depth_image, alpha=0.08)
-
+                ir_frame = frames_2.get_infrared_frame(1)
                 self.last_image = self.ir_np
-                self.ir_np = np.asanyarray(ir_frame_2.get_data())
-
-                #depth_colormap = cv2.applyColorMap(scaled_depth, cv2.COLORMAP_JET)
-                #print("** displaying Realsense **")
-                #cv2.imshow('RealSense', depth_colormap)
-                # return
+                self.ir_np = np.asanyarray(ir_frame.get_data())
 
             else:
+                ir_frame = frames.get_infrared_frame(1)
                 self.last_image = self.ir_np
                 depth = frames_2.get_depth_frame()
                 self.ir_np = np.asanyarray(ir_frame.get_data())
@@ -240,20 +265,27 @@ class RSTracker:
                     self.p0,
                     )
 
-                # TODO not printing, make everything self.?
-                print("opt_flow: ", pts_diff_avg)
+                pts_df = np.concatenate((self.p0, self.p0_depth, self.p0_ids), 1)
+                msg = FeatureMessage(timelib.time(), pts_df)
+                self._feature_stream.addOne(msg)
+                # above is where we should publish to buffer
+                # make a new dataframe with columns p0, p0_depth, ids
+
+                # will need tov in relation to imu
+                # subscribe to imu, whenever we get imu we update a local tov
+                # from the imu_messages tov
+                # when we process, use that tov for image
+
                 # add flow dims to show heading
                 self.h_x = (self.h_x + pts_diff_avg[0])
                 self.h_y = (self.h_y + pts_diff_avg[1])
                 self.h_z = (self.h_z + pts_diff_avg[2])
                 headings = [self.h_x, self.h_y, self.h_z]
 
-                print("headings xyz: ", headings)
-
-            #self.last_image = self.ir_np
-
-            #depth_colormap = cv2.applyColorMap(scaled_depth, cv2.COLORMAP_JET)
-            #cv2.imshow('RealSense', depth_colormap)
+                # TODO not printing, make everything self.?
+                if not self.headless:
+                    print("opt_flow: ", pts_diff_avg)
+                    print("headings xyz: ", headings)
 
         finally:
             if not self._running:
