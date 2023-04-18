@@ -71,12 +71,22 @@ class RSTracker:
             self.p0_depth = np.array([])
             self.p0_ids = np.array([])
             self.pts_diff = np.array([])
+            self.ids = np.array([])
 
             self._running = True
 
     def point_id(self, p0, p1):
         # write function to add ids to points
-        pass
+        if any(self.ids):
+            ids_to_add = [i for i in range(len(p0))]
+            self.ids = np.append(self.ids, ids_to_add)
+            # p0 = [1, 2, 3], self.ids will be [0, 1, 2]
+        else:
+            ids_to_add = [(i + (np.amax(self.ids) + 1)) for i in range(len(p1))]
+            self.ids = np.append(self.ids, ids_to_add)
+            # p0 = [1, 2, 3], len(p1) = 4, self.ids will be [0, 1, 2, 3, 4, 5, 6]
+            # will keep getting bigger! gotta remove bad pts?
+        return
 
     def optical_flow(self, new_image, old_image, depth, p0):
         frame = np.array([])
