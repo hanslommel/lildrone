@@ -14,6 +14,8 @@ class StateEstimatorBase:
     _sb = None
     _imu_stream = None
     _last_imu = None
+    _feature_stream = None
+    _last_feature = None
 
     def __init__(self, sb):
         print('Initializing StateEstimatorBase')
@@ -23,7 +25,7 @@ class StateEstimatorBase:
     def propagate(self):
         #print('StateEstimatorBase.propagate()')
         pass
-    
+
     def update(self):
         #print('StateEstimatorBase.update()')
         pass
@@ -31,12 +33,12 @@ class StateEstimatorBase:
     def loop(self):
         #print('StateEstimatorBase.loop()')
         pass
-    
+
     def start(self):
         with self._lock:
             print('StateEstimatorBase Start Running')
             self._running = True
-    
+
     def stop(self):
         with self._lock:
             print('StateEstimatorBase Stop Running')
@@ -46,7 +48,7 @@ class StateEstimator(StateEstimatorBase):
     def __init__(self, sb):
         print('Initializing StateEstimator')
         super(StateEstimator, self).__init__(sb)
-    
+
     def propagate(self):
         #print('StateEstimator.propagate()')
         # if we haven't already, connect to IMU stream
@@ -60,7 +62,22 @@ class StateEstimator(StateEstimatorBase):
             for msg in imu_messages:
                 if msg._tov > self._last_imu:
                     self._last_imu = msg._tov 
-    
+
+    def update(self):
+        if self._feature_stream is None:
+            print('Connecting to Feature stream')
+            self._feature_stream = self._sb.connect("Feature")
+
+        if self._feature_stream is not None:
+            feature_messages = self._feature_stream.getAll(self._last_feature)
+            print(f'Found {len(feature_messages)} new feature messages')
+            for msg in feature_messages:
+                if msg._tov > self._last_feature:
+                    self._last_feature = msg._tov
+            # if feature messages is not empty, this is where we
+            # put update into Kalman filter
+
+
     def loop(self):
         while True:
             with self._lock:
@@ -70,11 +87,11 @@ class StateEstimator(StateEstimatorBase):
                     if self._loop_last > (self._propagate_last + self._propagate_dt):
                         self._propagate_last = self._loop_last
                         self.propagate()
-                    
+
                     if self._loop_last > (self._update_last + self._update_dt):
                         self._update_last = self._loop_last
                         self.update()
-                    
+
                     if timelib.time() < (self._loop_last + self._loop_dt):
                         timelib.sleep(self._loop_last + self._loop_dt - timelib.time())
                     else:
